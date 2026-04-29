@@ -1,0 +1,301 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  SALES_AGENT
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DECEASED
+}
+
+enum PaymentPlanType {
+  MONTHLY
+  QUARTERLY
+  CUSTOM
+}
+
+enum PaymentPlanStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DEFAULTED
+}
+
+enum InstallmentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIALLY_PAID
+  WAIVED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHECK
+  CREDIT_CARD
+  DEBIT_CARD
+  MOBILE_MONEY
+  OTHER
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  BOTH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  RETRYING
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  STATUS_CHANGE
+  PAYMENT_POSTED
+  REMINDER_SENT
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole  @default(SALES_AGENT)
+  departmentId      String?
+  department        Department? @relation(fields: [departmentId], references: [id])
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  clients           Client[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([departmentId])
+  @@map("users")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  clients     Client[]
+
+  @@index([code])
+  @@map("departments")
+}
+
+model Client {
+  id                String      @id @default(uuid())
+  firstName         String
+  lastName          String
+  email             String      @unique
+  phone             String
+  alternatePhone    String?
+  idNumber          String?     @unique
+  address           String?
+  city              String?
+  state             String?
+  country           String      @default("NG")
+  postalCode        String?
+  dateOfBirth       DateTime?
+  departmentId      String
+  department        Department  @relation(fields: [departmentId], references: [id])
+  assignedAgentId   String
+  assignedAgent     User        @relation(fields: [assignedAgentId], references: [id])
+  status            ClientStatus @default(ACTIVE)
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  paymentPlans      PaymentPlan[]
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([idNumber])
+  @@index([departmentId])
+  @@index([assignedAgentId])
+  @@index([status])
+  @@map("clients")
+}
+
+model PaymentPlan {
+  id                String            @id @default(uuid())
+  clientId          String
+  client            Client            @relation(fields: [clientId], references: [id])
+  name              String
+  description       String?
+  totalAmount       Decimal           @db.Decimal(15, 2)
+  currency          String            @default("NGN")
+  planType          PaymentPlanType
+  startDate         DateTime
+  endDate           DateTime
+  installmentCount  Int
+  lateFeePercentage Decimal           @default(0) @db.Decimal(5, 2)
+  status            PaymentPlanStatus @default(ACTIVE)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  installments      Installment[]
+  auditLogs         AuditLog[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("payment_plans")
+}
+
+model Installment {
+  id                String            @id @default(uuid())
+  paymentPlanId     String
+  paymentPlan       PaymentPlan       @relation(fields: [paymentPlanId], references: [id])
+  installmentNumber Int
+  dueDate           DateTime
+  amount            Decimal           @db.Decimal(15, 2)
+  amountPaid        Decimal           @default(0) @db.Decimal(15, 2)
+  lateFee           Decimal           @default(0) @db.Decimal(15, 2)
+  status            InstallmentStatus @default(PENDING)
+  paidAt            DateTime?
+  notes             String?
+  reminderSentAt    DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  payments          Payment[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+
+  @@index([paymentPlanId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([dueDate, status])
+  @@unique([paymentPlanId, installmentNumber])
+  @@map("installments")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  installmentId   String
+  installment     Installment   @relation(fields: [installmentId], references: [id])
+  amount          Decimal       @db.Decimal(15, 2)
+  paymentMethod   PaymentMethod
+  transactionRef  String?       @unique
+  bankName        String?
+  checkNumber     String?
+  paymentDate     DateTime      @default(now())
+  receivedById    String
+  receivedBy      User          @relation(fields: [receivedById], references: [id])
+  notes           String?
+  receiptUrl      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  auditLogs       AuditLog[]
+
+  @@index([installmentId])
+  @@index([transactionRef])
+  @@index([paymentDate])
+  @@index([receivedById])
+  @@map("payments")
+}
+
+model Notification {
+  id              String             @id @default(uuid())
+  userId          String?
+  user            User?              @relation(fields: [userId], references: [id])
+  installmentId   String?
+  installment     Installment?       @relation(fields: [installmentId], references: [id])
+  type            NotificationType
+  recipientEmail  String?
+  recipientPhone  String?
+  subject         String?
+  message         String             @db.Text
+  status          NotificationStatus @default(PENDING)
+  sentAt          DateTime?
+  errorMessage    String?
+  retryCount      Int                @default(0)
+  maxRetries      Int                @default(3)
+  scheduledFor    DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([installmentId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id              String      @id @default(uuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  action          AuditAction
+  entityType      String
+  entityId        String?
+  oldValues       Json?
+  newValues       Json?
+  ipAddress       String?
+  userAgent       String?
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
