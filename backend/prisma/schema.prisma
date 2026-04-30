@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("SALES_AGENT")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clients   Client[]
+  auditLogs AuditLog[]
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String?
+  price     Float
+  status    String   @default("AVAILABLE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paymentPlans PaymentPlan[]
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  idNumber  String?  @unique
+  agentId   String
+  agent     User     @relation(fields: [agentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paymentPlans PaymentPlan[]
+}
+
+model PaymentPlan {
+  id           String   @id @default(uuid())
+  clientId     String
+  departmentId String
+  totalAmount  Float
+  deposit      Float
+  startDate    DateTime
+  endDate      DateTime
+  frequency    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  client       Client       @relation(fields: [clientId], references: [id])
+  department   Department   @relation(fields: [departmentId], references: [id])
+  installments Installment[]
+}
+
+model Installment {
+  id            String   @id @default(uuid())
+  paymentPlanId String
+  amount        Float
+  dueDate       DateTime
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  paymentPlan   PaymentPlan    @relation(fields: [paymentPlanId], references: [id])
+  payments      Payment[]
+  notifications Notification[]
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  installmentId String
+  amount        Float
+  paymentDate   DateTime @default(now())
+  receiptUrl    String?
+  reference     String?
+  createdAt     DateTime @default(now())
+
+  installment   Installment @relation(fields: [installmentId], references: [id])
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  installmentId String
+  type          String
+  status        String    @default("PENDING")
+  scheduledFor  DateTime
+  sentAt        DateTime?
+  errorLog      String?
+  createdAt     DateTime  @default(now())
+
+  installment   Installment @relation(fields: [installmentId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  details    String
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id])
+}
