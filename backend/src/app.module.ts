@@ -10,6 +10,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ExportsModule } from './exports/exports.module';
 
 import { UsersModule } from './users/users.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     PaymentsModule,
     NotificationsModule,
     ExportsModule,
+    AiModule,
   ],
 })
 export class AppModule {}

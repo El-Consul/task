@@ -97,4 +97,9 @@ export const exportsApi = {
     api.get('/exports/accounting', { params: filters, responseType: 'blob' }),
 };
 
+// AI
+export const aiApi = {
+  chat: (prompt: string) => api.post('/ai/chat', { prompt }),
+};
+
 export default api;
