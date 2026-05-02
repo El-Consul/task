@@ -17,6 +17,7 @@ const payment_plans_module_1 = require("./payment-plans/payment-plans.module");
 const payments_module_1 = require("./payments/payments.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const exports_module_1 = require("./exports/exports.module");
+const users_module_1 = require("./users/users.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +27,7 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
+            users_module_1.UsersModule,
             clients_module_1.ClientsModule,
             departments_module_1.DepartmentsModule,
             payment_plans_module_1.PaymentPlansModule,

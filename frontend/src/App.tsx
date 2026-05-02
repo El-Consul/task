@@ -8,6 +8,7 @@ import ClientDetail from './pages/ClientDetail';
 import DepartmentsList from './pages/DepartmentsList';
 import PaymentPlansList from './pages/PaymentPlansList';
 import PaymentsPage from './pages/PaymentsPage';
+import UsersList from './pages/UsersList';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -53,6 +54,7 @@ function AppLayout() {
             <Route path="/departments" element={<DepartmentsList />} />
             <Route path="/payment-plans" element={<PaymentPlansList />} />
             <Route path="/payments" element={<PaymentsPage />} />
+            <Route path="/users" element={<UsersList />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

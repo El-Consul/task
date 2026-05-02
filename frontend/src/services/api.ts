@@ -82,6 +82,14 @@ export const notificationsApi = {
     api.get('/notifications/installments', { params: status ? { status } : {} }),
 };
 
+// Users (Admin Only)
+export const usersApi = {
+  getAll: () => api.get('/users'),
+  getOne: (id: string) => api.get(`/users/${id}`),
+  update: (id: string, data: any) => api.patch(`/users/${id}`, data),
+  remove: (id: string) => api.delete(`/users/${id}`),
+};
+
 // Exports
 export const exportsApi = {
   getSummary: () => api.get('/exports/summary'),

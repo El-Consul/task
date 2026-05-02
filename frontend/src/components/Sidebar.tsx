@@ -15,6 +15,7 @@ const Sidebar = () => {
     { name: 'Departments', path: '/departments', icon: <Building size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
     { name: 'Payment Plans', path: '/payment-plans', icon: <CreditCard size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
     { name: 'Payments', path: '/payments', icon: <DollarSign size={20} />, roles: ['ADMIN', 'ACCOUNTANT'] },
+    { name: 'User Management', path: '/users', icon: <Settings size={20} />, roles: ['ADMIN'] },
   ];
 
   const visibleItems = menuItems.filter((item) => !user?.role || item.roles.includes(user.role));

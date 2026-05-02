@@ -42,31 +42,58 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PrismaService = void 0;
+exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
-const client_1 = require("@prisma/client");
-const pg_1 = require("pg");
-const adapter_pg_1 = require("@prisma/adapter-pg");
-const dotenv = __importStar(require("dotenv"));
-dotenv.config();
-let PrismaService = class PrismaService extends client_1.PrismaClient {
-    constructor() {
-        const pool = new pg_1.Pool({ connectionString: process.env.DATABASE_URL });
-        const adapter = new adapter_pg_1.PrismaPg(pool);
-        super({ adapter });
+const prisma_service_1 = require("../prisma/prisma.service");
+const bcrypt = __importStar(require("bcrypt"));
+let UsersService = class UsersService {
+    prisma;
+    constructor(prisma) {
+        this.prisma = prisma;
     }
-    async onModuleInit() {
-        await this.$connect();
-        const count = await this.user.count();
-        console.log(`[PrismaService] Connected. Users in DB: ${count}`);
+    async findAll() {
+        return this.prisma.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                isActive: true,
+                createdAt: true,
+            },
+        });
     }
-    async onModuleDestroy() {
-        await this.$disconnect();
+    async findOne(id) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                isActive: true,
+            },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        return user;
+    }
+    async update(id, data) {
+        if (data.password) {
+            data.password = await bcrypt.hash(data.password, 10);
+        }
+        return this.prisma.user.update({
+            where: { id },
+            data,
+        });
+    }
+    async remove(id) {
+        return this.prisma.user.delete({ where: { id } });
     }
 };
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
+exports.UsersService = UsersService;
+exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
-], PrismaService);
-//# sourceMappingURL=prisma.service.js.map
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], UsersService);
+//# sourceMappingURL=users.service.js.map
