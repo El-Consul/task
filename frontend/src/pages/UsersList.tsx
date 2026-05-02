@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usersApi, authApi } from '../services/api';
-import { User, Shield, UserPlus, Mail, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, UserPlus, Mail, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface SystemUser {
   id: string;
