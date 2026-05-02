@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  functions = "dist"
+  publish = "dist"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/lambda/:splat"
+  status = 200
+
+[functions]
+  node_bundle = true
