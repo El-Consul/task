@@ -4,35 +4,36 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
 const server = express();
+let app: any;
 
-export const createServer = async () => {
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-  
-  app.enableCors({
-    origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
-    credentials: true,
-  });
+async function bootstrap() {
+  if (!app) {
+    app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    app.enableCors({
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+      credentials: true,
+    });
+    app.setGlobalPrefix('api');
+    await app.init();
+  }
+}
 
-  app.setGlobalPrefix('api');
-  await app.init();
-};
-
-createServer();
-
-// This is the entry point for Vercel
-export default (req: any, res: any) => {
+// Vercel serverless handler
+export default async (req: any, res: any) => {
+  await bootstrap();
   server(req, res);
 };
 
-// For local development
+// Local development
 if (process.env.NODE_ENV !== 'production') {
-  const bootstrap = async () => {
-    const app = await NestFactory.create(AppModule);
-    app.enableCors();
-    app.setGlobalPrefix('api');
-    await app.listen(3001);
+  const startLocal = async () => {
+    const localApp = await NestFactory.create(AppModule);
+    localApp.enableCors();
+    localApp.setGlobalPrefix('api');
+    await localApp.listen(3001);
+    console.log('🚀 Local Backend running at http://localhost:3001/api');
   };
-  bootstrap();
+  startLocal();
 }
