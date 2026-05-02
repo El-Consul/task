@@ -4,23 +4,31 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
 const server = express();
+
+// Manual CORS Middleware to override any serverless issues
+server.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).send();
+  }
+  next();
+});
+
 let app: any;
 
 async function bootstrap() {
   if (!app) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-    app.enableCors({
-      origin: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-      credentials: true,
-    });
     app.setGlobalPrefix('api');
     await app.init();
   }
 }
 
-// Vercel serverless handler
+// Vercel entry point
 export default async (req: any, res: any) => {
   await bootstrap();
   server(req, res);
@@ -33,7 +41,6 @@ if (process.env.NODE_ENV !== 'production') {
     localApp.enableCors();
     localApp.setGlobalPrefix('api');
     await localApp.listen(3001);
-    console.log('🚀 Local Backend running at http://localhost:3001/api');
   };
   startLocal();
 }

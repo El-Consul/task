@@ -8,16 +8,20 @@ const app_module_1 = require("./app.module");
 const platform_express_1 = require("@nestjs/platform-express");
 const express_1 = __importDefault(require("express"));
 const server = (0, express_1.default)();
+server.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.status(200).send();
+    }
+    next();
+});
 let app;
 async function bootstrap() {
     if (!app) {
         app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_express_1.ExpressAdapter(server));
-        app.enableCors({
-            origin: true,
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-            credentials: true,
-        });
         app.setGlobalPrefix('api');
         await app.init();
     }
@@ -32,7 +36,6 @@ if (process.env.NODE_ENV !== 'production') {
         localApp.enableCors();
         localApp.setGlobalPrefix('api');
         await localApp.listen(3001);
-        console.log('🚀 Local Backend running at http://localhost:3001/api');
     };
     startLocal();
 }
