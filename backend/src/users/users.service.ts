@@ -13,6 +13,7 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        permissions: true,
         isActive: true,
         createdAt: true,
       },
@@ -27,6 +28,7 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        permissions: true,
         isActive: true,
       },
     });
@@ -35,12 +37,24 @@ export class UsersService {
   }
 
   async update(id: string, data: any) {
-    if (data.password) {
+    // Strip empty password to avoid overwriting with a hash of ""
+    if (!data.password) {
+      delete data.password;
+    } else {
       data.password = await bcrypt.hash(data.password, 10);
     }
     return this.prisma.user.update({
       where: { id },
       data,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        permissions: true,
+        isActive: true,
+        createdAt: true,
+      },
     });
   }
 

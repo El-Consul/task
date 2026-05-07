@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clientsApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Eye, Edit3, Users, Loader2, X } from 'lucide-react';
 
 interface Client {
@@ -23,6 +24,8 @@ const ClientsList = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canManage = user?.role === 'ADMIN' || user?.permissions?.includes('CLIENTS_MANAGE');
 
   const fetchClients = async () => {
     try {
@@ -72,9 +75,11 @@ const ClientsList = () => {
           <h1 className="text-h2">Clients</h1>
           <p className="text-muted mt-2">Manage your real estate clients</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)} id="add-client-btn">
-          <Plus size={18} /> Add Client
-        </button>
+        {canManage && (
+          <button className="btn btn-primary" onClick={() => setShowModal(true)} id="add-client-btn">
+            <Plus size={18} /> Add Client
+          </button>
+        )}
       </div>
 
       <div className="search-bar">
@@ -136,9 +141,11 @@ const ClientsList = () => {
                       <button className="btn-icon" onClick={() => navigate(`/clients/${client.id}`)} title="View Details">
                         <Eye size={16} />
                       </button>
-                      <button className="btn-icon" title="Edit">
-                        <Edit3 size={16} />
-                      </button>
+                      {canManage && (
+                        <button className="btn-icon" title="Edit">
+                          <Edit3 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,5 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -11,7 +14,9 @@ export class AuthController {
   }
 
   @Post('register')
-  register(@Body() body: { email: string; password: string; name: string; role: string }) {
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('USERS_MANAGE')
+  register(@Body() body: { email: string; password: string; name: string; role: string; permissions?: string[] }) {
     return this.authService.register(body);
   }
 }

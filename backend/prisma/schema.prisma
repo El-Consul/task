@@ -3,18 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("SALES_AGENT")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        String   @default("SALES_AGENT")
+  permissions String   @default("[]") // Changed to String because SQLite doesn't support String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   clients   Client[]
   auditLogs AuditLog[]
@@ -28,39 +29,43 @@ model Department {
   status    String   @default("AVAILABLE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  paymentPlans PaymentPlan[]
 }
 
 model Client {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  phone     String
-  idNumber  String?  @unique
-  agentId   String
-  agent     User     @relation(fields: [agentId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement()) // رقم العميل
+  name        String
+  phone       String
+  unitNumber  String?
+  unitCode    String?
+  unitArea    Float?
+  groupId     Int?
+  
+  email       String?
+  idNumber    String?
+  agentId     String?
+  agent       User?    @relation(fields: [agentId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   paymentPlans PaymentPlan[]
 }
 
 model PaymentPlan {
-  id           String   @id @default(uuid())
-  clientId     String
-  departmentId String
-  totalAmount  Float
-  deposit      Float
-  startDate    DateTime
-  endDate      DateTime
-  frequency    String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  clientId         Int
+  unitPrice        Float
+  contractDate     DateTime
+  deposit          Float
+  remainingAmount  Float
+  measurements     Float?
+  deposit10Percent Float?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  client       Client       @relation(fields: [clientId], references: [id])
-  department   Department   @relation(fields: [departmentId], references: [id])
-  installments Installment[]
+  client           Client   @relation(fields: [clientId], references: [id])
+  installments     Installment[]
 }
 
 model Installment {
@@ -68,25 +73,16 @@ model Installment {
   paymentPlanId String
   amount        Float
   dueDate       DateTime
-  status        String   @default("PENDING")
+  type          String   @default("REGULAR") // REGULAR, DELIVERY, MAINTENANCE, FINAL
+  status        String   @default("PENDING") // PENDING, PAID
+  paymentMethod String?  // CHECK, CASH, TRANSFER
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  paymentPlan   PaymentPlan    @relation(fields: [paymentPlanId], references: [id])
+  paymentPlan   PaymentPlan @relation(fields: [paymentPlanId], references: [id])
   payments      Payment[]
   notifications Notification[]
-}
-
-model Payment {
-  id            String   @id @default(uuid())
-  installmentId String
-  amount        Float
-  paymentDate   DateTime @default(now())
-  receiptUrl    String?
-  reference     String?
-  createdAt     DateTime @default(now())
-
-  installment   Installment @relation(fields: [installmentId], references: [id])
 }
 
 model Notification {
@@ -98,6 +94,18 @@ model Notification {
   sentAt        DateTime?
   errorLog      String?
   createdAt     DateTime  @default(now())
+
+  installment   Installment @relation(fields: [installmentId], references: [id])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  installmentId String
+  amount        Float
+  paymentDate   DateTime @default(now())
+  receiptUrl    String?
+  reference     String?
+  createdAt     DateTime @default(now())
 
   installment   Installment @relation(fields: [installmentId], references: [id])
 }

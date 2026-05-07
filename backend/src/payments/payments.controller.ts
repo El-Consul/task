@@ -1,22 +1,22 @@
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
 
 @Controller('payments')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
 
   @Post()
-  @Roles('ADMIN', 'ACCOUNTANT')
+  @Permissions('PAYMENTS_MANAGE')
   post(@Req() req: any, @Body() body: any) {
     return this.service.post(req.user.id, body);
   }
 
   @Get()
-  @Roles('ADMIN', 'ACCOUNTANT')
+  @Permissions('PAYMENTS_VIEW')
   findAll() {
     return this.service.findAll();
   }

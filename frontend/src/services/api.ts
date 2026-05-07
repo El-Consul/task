@@ -14,14 +14,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Redirect to login on 401 or 403 (stale token without permissions)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && window.location.pathname !== '/login') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    const status = err.response?.status;
+    if ((status === 401 || status === 403) && window.location.pathname !== '/login') {
+      // Only force logout on 403 if it's a permissions/auth issue, not a data validation error
+      if (status === 401 || (status === 403 && err.response?.data?.message?.includes('permission'))) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   },
@@ -31,7 +35,7 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (data: { email: string; password: string; name: string; role: string }) =>
+  register: (data: { email: string; password: string; name: string; role: string; permissions?: string[] }) =>
     api.post('/auth/register', data),
 };
 

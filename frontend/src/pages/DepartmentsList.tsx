@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { departmentsApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Building, Search, Edit3, Loader2, X } from 'lucide-react';
 
 interface Department {
@@ -20,6 +21,8 @@ const DepartmentsList = () => {
   const [formData, setFormData] = useState({ code: '', name: '', price: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
+  const canManage = user?.role === 'ADMIN' || user?.permissions?.includes('DEPARTMENTS_MANAGE');
 
   const fetchDepartments = async () => {
     try {
@@ -89,9 +92,11 @@ const DepartmentsList = () => {
           <h1 className="text-h2">Departments / Units</h1>
           <p className="text-muted mt-2">Manage property units and their status</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditId(null); setFormData({ code: '', name: '', price: '' }); setShowModal(true); }} id="add-department-btn">
-          <Plus size={18} /> Add Unit
-        </button>
+        {canManage && (
+          <button className="btn btn-primary" onClick={() => { setEditId(null); setFormData({ code: '', name: '', price: '' }); setShowModal(true); }} id="add-department-btn">
+            <Plus size={18} /> Add Unit
+          </button>
+        )}
       </div>
 
       {/* Stats Row */}
@@ -140,9 +145,11 @@ const DepartmentsList = () => {
               </div>
               <h3 className="font-medium mb-2">{dept.name || `Unit ${dept.code}`}</h3>
               <p className="text-h3 text-accent-primary mb-4">${dept.price.toLocaleString()}</p>
-              <button className="btn btn-secondary w-full" onClick={() => openEdit(dept)}>
-                <Edit3 size={14} /> Edit
-              </button>
+              {canManage && (
+                <button className="btn btn-secondary w-full" onClick={() => openEdit(dept)}>
+                  <Edit3 size={14} /> Edit
+                </button>
+              )}
             </div>
           ))}
         </div>

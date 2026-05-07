@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paymentPlansApi, clientsApi, departmentsApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Eye, CreditCard, Loader2, X } from 'lucide-react';
 
 interface PaymentPlan {
@@ -24,6 +25,8 @@ const PaymentPlansList = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canManage = user?.role === 'ADMIN' || user?.permissions?.includes('PAYMENT_PLANS_MANAGE');
 
   const [formData, setFormData] = useState({
     clientId: '', departmentId: '', totalAmount: '', deposit: '',
@@ -90,9 +93,11 @@ const PaymentPlansList = () => {
           <h1 className="text-h2">Payment Plans</h1>
           <p className="text-muted mt-2">Manage installment plans for property purchases</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} id="add-plan-btn">
-          <Plus size={18} /> Create Plan
-        </button>
+        {canManage && (
+          <button className="btn btn-primary" onClick={openCreate} id="add-plan-btn">
+            <Plus size={18} /> Create Plan
+          </button>
+        )}
       </div>
 
       {loading ? (

@@ -5,32 +5,32 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ClientsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(agentId: string, data: { name: string; email: string; phone: string; idNumber?: string }) {
+  async create(agentId: string, data: any) {
     const client = await this.prisma.client.create({ data: { ...data, agentId } });
     await this.prisma.auditLog.create({
-      data: { userId: agentId, action: 'CREATE', entityType: 'Client', entityId: client.id, details: JSON.stringify(data) },
+      data: { userId: agentId, action: 'CREATE', entityType: 'Client', entityId: client.id.toString(), details: JSON.stringify(data) },
     });
     return client;
   }
 
   async findAll() {
     return this.prisma.client.findMany({
-      include: { agent: { select: { id: true, name: true, email: true } }, paymentPlans: { include: { department: true } } },
+      include: { agent: { select: { id: true, name: true, email: true } }, paymentPlans: true },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     return this.prisma.client.findUnique({
       where: { id },
-      include: { agent: true, paymentPlans: { include: { department: true, installments: { orderBy: { dueDate: 'asc' } } } } },
+      include: { agent: true, paymentPlans: { include: { installments: { orderBy: { dueDate: 'asc' } } } } },
     });
   }
 
-  async update(userId: string, id: string, data: any) {
+  async update(userId: string, id: number, data: any) {
     const updated = await this.prisma.client.update({ where: { id }, data });
     await this.prisma.auditLog.create({
-      data: { userId, action: 'UPDATE', entityType: 'Client', entityId: id, details: JSON.stringify(data) },
+      data: { userId, action: 'UPDATE', entityType: 'Client', entityId: id.toString(), details: JSON.stringify(data) },
     });
     return updated;
   }

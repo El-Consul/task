@@ -11,14 +11,21 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
-    { name: 'Clients', path: '/clients', icon: <Users size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
+    { name: 'Clients', path: '/clients', icon: <Users size={20} />, permissions: ['CLIENTS_VIEW'], roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
     { name: 'Departments', path: '/departments', icon: <Building size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
-    { name: 'Payment Plans', path: '/payment-plans', icon: <CreditCard size={20} />, roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
-    { name: 'Payments', path: '/payments', icon: <DollarSign size={20} />, roles: ['ADMIN', 'ACCOUNTANT'] },
-    { name: 'User Management', path: '/users', icon: <Settings size={20} />, roles: ['ADMIN'] },
+    { name: 'Payment Plans', path: '/payment-plans', icon: <CreditCard size={20} />, permissions: ['PAYMENT_PLANS_VIEW'], roles: ['ADMIN', 'ACCOUNTANT', 'SALES_AGENT'] },
+    { name: 'Payments', path: '/payments', icon: <DollarSign size={20} />, permissions: ['PAYMENTS_VIEW'], roles: ['ADMIN', 'ACCOUNTANT'] },
+    { name: 'User Management', path: '/users', icon: <Settings size={20} />, permissions: ['USERS_MANAGE'], roles: ['ADMIN'] },
   ];
 
-  const visibleItems = menuItems.filter((item) => !user?.role || item.roles.includes(user.role));
+  const visibleItems = menuItems.filter((item) => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    if (item.permissions) {
+      return item.permissions.some(p => user.permissions?.includes(p));
+    }
+    return !user.role || item.roles.includes(user.role);
+  });
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
@@ -70,10 +77,6 @@ const Sidebar = () => {
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <Link to="/settings" className="sidebar-link">
-            <span className="sidebar-link-icon"><Settings size={20} /></span>
-            Settings
-          </Link>
           <button className="sidebar-link sidebar-logout" onClick={logout}>
             <span className="sidebar-link-icon"><LogOut size={20} /></span>
             Logout

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { paymentsApi, notificationsApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { DollarSign, Loader2, X, CheckCircle } from 'lucide-react';
 
 interface Installment {
@@ -38,6 +39,8 @@ const PaymentsPage = () => {
   const [reference, setReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
+  const canManage = user?.role === 'ADMIN' || user?.permissions?.includes('PAYMENTS_MANAGE');
 
   const fetchData = async () => {
     try {
@@ -140,9 +143,11 @@ const PaymentsPage = () => {
                       <td className="font-bold">${inst.amount.toLocaleString()}</td>
                       <td><span className={`badge ${isOverdue ? 'badge-danger' : 'badge-warning'}`}>{isOverdue ? 'OVERDUE' : inst.status}</span></td>
                       <td>
-                        <button className="btn btn-primary btn-sm" onClick={() => openPayment(inst)}>
-                          <DollarSign size={14} /> Record Payment
-                        </button>
+                        {canManage && (
+                          <button className="btn btn-primary btn-sm" onClick={() => openPayment(inst)}>
+                            <DollarSign size={14} /> Record Payment
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );

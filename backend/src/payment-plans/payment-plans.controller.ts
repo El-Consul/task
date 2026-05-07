@@ -1,28 +1,28 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { PaymentPlansService } from './payment-plans.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
 
 @Controller('payment-plans')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PaymentPlansController {
   constructor(private readonly service: PaymentPlansService) {}
 
   @Post()
-  @Roles('ADMIN', 'SALES_AGENT')
+  @Permissions('PAYMENT_PLANS_MANAGE')
   create(@Req() req: any, @Body() body: any) {
     return this.service.create(req.user.id, body);
   }
 
   @Get()
-  @Roles('ADMIN', 'ACCOUNTANT', 'SALES_AGENT')
+  @Permissions('PAYMENT_PLANS_VIEW')
   findAll() {
     return this.service.findAll();
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'ACCOUNTANT', 'SALES_AGENT')
+  @Permissions('PAYMENT_PLANS_VIEW')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }

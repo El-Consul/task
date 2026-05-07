@@ -14,24 +14,22 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      try {
-        const [sumRes, cRes, dRes, payRes, instRes] = await Promise.all([
-          exportsApi.getSummary(),
-          clientsApi.getAll(),
-          departmentsApi.getAll(),
-          paymentsApi.getAll(),
-          notificationsApi.getInstallments('PENDING'),
-        ]);
-        setSummary(sumRes.data);
-        setClientCount(cRes.data.length);
-        setDeptCount(dRes.data.length);
-        setRecentPayments(payRes.data.slice(0, 5));
-        setUpcomingInstallments(instRes.data.slice(0, 6));
-      } catch (err) {
-        console.error('Dashboard load error', err);
-      } finally {
-        setLoading(false);
-      }
+      // Each call is independent so partial permission failures don't break the whole dashboard
+      const results = await Promise.allSettled([
+        exportsApi.getSummary(),
+        clientsApi.getAll(),
+        departmentsApi.getAll(),
+        paymentsApi.getAll(),
+        notificationsApi.getInstallments('PENDING'),
+      ]);
+
+      if (results[0].status === 'fulfilled') setSummary(results[0].value.data);
+      if (results[1].status === 'fulfilled') setClientCount(results[1].value.data.length);
+      if (results[2].status === 'fulfilled') setDeptCount(results[2].value.data.length);
+      if (results[3].status === 'fulfilled') setRecentPayments(results[3].value.data.slice(0, 5));
+      if (results[4].status === 'fulfilled') setUpcomingInstallments(results[4].value.data.slice(0, 6));
+
+      setLoading(false);
     };
     fetchAll();
   }, []);
