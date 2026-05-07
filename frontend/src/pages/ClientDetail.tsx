@@ -1,25 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { clientsApi } from '../services/api';
-import { ArrowLeft, User, Mail, Phone, CreditCard, Calendar, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, CreditCard, Calendar, Loader2, Home, Hash, Map } from 'lucide-react';
 
 interface ClientDetail {
-  id: string;
+  id: number;
   name: string;
-  email: string;
   phone: string;
+  unitNumber?: string;
+  unitCode?: string;
+  unitArea?: number;
+  groupId?: number;
+  email?: string;
   idNumber?: string;
   createdAt: string;
   agent?: { id: string; name: string; email: string; role: string };
   paymentPlans?: {
     id: string;
-    totalAmount: number;
+    unitPrice: number;
     deposit: number;
-    startDate: string;
-    endDate: string;
-    frequency: string;
-    department: { code: string; name?: string; price: number };
-    installments: { id: string; amount: number; dueDate: string; status: string }[];
+    remainingAmount: number;
+    measurements?: number;
+    deposit10Percent?: number;
+    contractDate: string;
+    installments: { id: string; amount: number; dueDate: string; status: string; type: string }[];
   }[];
 }
 
@@ -64,6 +68,15 @@ const ClientDetail = () => {
     }
   };
 
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case 'MAINTENANCE': return <span className="badge badge-warning">Maintenance</span>;
+      case 'DELIVERY': return <span className="badge badge-info">Delivery</span>;
+      case 'FINAL': return <span className="badge badge-primary">Final</span>;
+      default: return <span className="badge badge-secondary">Regular</span>;
+    }
+  };
+
   return (
     <div className="flex-col gap-6">
       <button className="btn btn-secondary" onClick={() => navigate('/clients')} style={{ alignSelf: 'flex-start' }}>
@@ -75,14 +88,36 @@ const ClientDetail = () => {
         <div className="card glass-panel">
           <div className="flex-col gap-4">
             <div className="avatar-lg">{client.name.charAt(0)}</div>
-            <h2 className="text-h3">{client.name}</h2>
-            <div className="flex-col gap-2">
-              <div className="flex items-center gap-2 text-muted">
-                <Mail size={16} /> {client.email}
-              </div>
+            <h2 className="text-h3">#{client.id} - {client.name}</h2>
+            {client.groupId && (
+              <span className={`badge ${client.groupId === 1 ? 'badge-primary' : 'badge-warning'} w-fit`}>
+                Group {client.groupId}
+              </span>
+            )}
+            <div className="flex-col gap-2 mt-2">
               <div className="flex items-center gap-2 text-muted">
                 <Phone size={16} /> {client.phone}
               </div>
+              {client.email && (
+                <div className="flex items-center gap-2 text-muted">
+                  <Mail size={16} /> {client.email}
+                </div>
+              )}
+              {client.unitCode && (
+                <div className="flex items-center gap-2 text-muted">
+                  <Hash size={16} /> Unit Code: {client.unitCode}
+                </div>
+              )}
+              {client.unitNumber && (
+                <div className="flex items-center gap-2 text-muted">
+                  <Home size={16} /> {client.unitNumber}
+                </div>
+              )}
+              {client.unitArea && (
+                <div className="flex items-center gap-2 text-muted">
+                  <Map size={16} /> {client.unitArea} m²
+                </div>
+              )}
               {client.idNumber && (
                 <div className="flex items-center gap-2 text-muted">
                   <User size={16} /> ID: {client.idNumber}
@@ -96,7 +131,6 @@ const ClientDetail = () => {
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                 <span className="text-sm text-muted">Assigned Agent</span>
                 <p className="font-medium">{client.agent.name}</p>
-                <p className="text-sm text-muted">{client.agent.email}</p>
               </div>
             )}
           </div>
@@ -104,14 +138,14 @@ const ClientDetail = () => {
 
         {/* Payment Plans */}
         <div className="card glass-panel" style={{ gridColumn: 'span 2' }}>
-          <h3 className="text-h3 mb-4">
-            <CreditCard size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          <h3 className="text-h3 mb-4 flex items-center gap-2">
+            <CreditCard size={20} />
             Payment Plans ({client.paymentPlans?.length || 0})
           </h3>
           {!client.paymentPlans?.length ? (
             <div className="empty-state-sm">
               <p className="text-muted">No payment plans yet</p>
-              <button className="btn btn-primary" onClick={() => navigate('/payment-plans')}>
+              <button className="btn btn-primary mt-2" onClick={() => navigate('/payment-plans/new')}>
                 Create Payment Plan
               </button>
             </div>
@@ -124,27 +158,35 @@ const ClientDetail = () => {
                   <div key={plan.id} className="plan-card">
                     <div className="flex justify-between items-center mb-4">
                       <div>
-                        <h4 className="font-medium">Unit {plan.department.code}</h4>
-                        <span className="text-sm text-muted">{plan.frequency} • {plan.installments.length} installments</span>
+                        <h4 className="font-medium text-lg">Contract Date: {new Date(plan.contractDate).toLocaleDateString()}</h4>
+                        <span className="text-sm text-muted">{plan.installments.length} installments</span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p className="font-bold text-accent-primary">${plan.totalAmount.toLocaleString()}</p>
-                        <span className="text-sm text-muted">Deposit: ${plan.deposit.toLocaleString()}</span>
+                        <p className="font-bold text-accent-primary text-xl">{plan.unitPrice.toLocaleString()} EGP</p>
+                        <span className="text-sm text-muted block">Deposit: {plan.deposit.toLocaleString()} EGP</span>
+                        <span className="text-sm text-muted block">Remaining: {plan.remainingAmount.toLocaleString()} EGP</span>
                       </div>
                     </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm bg-black/20 p-3 rounded-lg border border-white/5">
+                      {plan.measurements ? <div><span className="text-muted">Measurements:</span> {plan.measurements.toLocaleString()} EGP</div> : null}
+                      {plan.deposit10Percent ? <div><span className="text-muted">10% Deposit:</span> {plan.deposit10Percent.toLocaleString()} EGP</div> : null}
+                    </div>
+
                     <div className="progress-bar-container">
                       <div className="progress-bar" style={{ width: `${progress}%` }} />
                     </div>
-                    <span className="text-sm text-muted mt-2">{paidCount}/{plan.installments.length} installments paid ({Math.round(progress)}%)</span>
+                    <span className="text-sm text-muted mt-2 block mb-4">{paidCount}/{plan.installments.length} installments paid ({Math.round(progress)}%)</span>
 
                     {/* Installments Table */}
-                    <div className="table-container mt-4" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                       <table>
-                        <thead>
+                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>
                           <tr>
                             <th>#</th>
+                            <th>Type</th>
                             <th>Due Date</th>
-                            <th>Amount</th>
+                            <th>Amount (EGP)</th>
                             <th>Status</th>
                           </tr>
                         </thead>
@@ -152,8 +194,9 @@ const ClientDetail = () => {
                           {plan.installments.map((inst, idx) => (
                             <tr key={inst.id}>
                               <td className="text-muted">{idx + 1}</td>
+                              <td>{getTypeBadge(inst.type)}</td>
                               <td>{new Date(inst.dueDate).toLocaleDateString()}</td>
-                              <td className="font-medium">${inst.amount.toLocaleString()}</td>
+                              <td className="font-medium">{inst.amount.toLocaleString()}</td>
                               <td><span className={`badge ${getStatusColor(inst.status)}`}>{inst.status}</span></td>
                             </tr>
                           ))}

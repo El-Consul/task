@@ -42,10 +42,9 @@ export const authApi = {
 // Clients
 export const clientsApi = {
   getAll: () => api.get('/clients'),
-  getOne: (id: string) => api.get(`/clients/${id}`),
-  create: (data: { name: string; email: string; phone: string; idNumber?: string }) =>
-    api.post('/clients', data),
-  update: (id: string, data: any) => api.put(`/clients/${id}`, data),
+  getOne: (id: string | number) => api.get(`/clients/${id}`),
+  create: (data: any) => api.post('/clients', data),
+  update: (id: string | number, data: any) => api.put(`/clients/${id}`, data),
 };
 
 // Departments
@@ -61,15 +60,7 @@ export const departmentsApi = {
 export const paymentPlansApi = {
   getAll: () => api.get('/payment-plans'),
   getOne: (id: string) => api.get(`/payment-plans/${id}`),
-  create: (data: {
-    clientId: string;
-    departmentId: string;
-    totalAmount: number;
-    deposit: number;
-    startDate: string;
-    endDate: string;
-    frequency: string;
-  }) => api.post('/payment-plans', data),
+  create: (data: any) => api.post('/payment-plans', data),
 };
 
 // Payments

@@ -7,6 +7,7 @@ import ClientsList from './pages/ClientsList';
 import ClientDetail from './pages/ClientDetail';
 import DepartmentsList from './pages/DepartmentsList';
 import PaymentPlansList from './pages/PaymentPlansList';
+import CreatePaymentPlan from './pages/CreatePaymentPlan';
 import PaymentsPage from './pages/PaymentsPage';
 import UsersList from './pages/UsersList';
 
@@ -53,6 +54,7 @@ function AppLayout() {
             <Route path="/clients/:id" element={<ClientDetail />} />
             <Route path="/departments" element={<DepartmentsList />} />
             <Route path="/payment-plans" element={<PaymentPlansList />} />
+            <Route path="/payment-plans/new" element={<CreatePaymentPlan />} />
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/users" element={<UsersList />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

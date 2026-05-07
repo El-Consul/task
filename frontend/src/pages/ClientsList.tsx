@@ -5,10 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Eye, Edit3, Users, Loader2, X } from 'lucide-react';
 
 interface Client {
-  id: string;
+  id: number;
   name: string;
-  email: string;
   phone: string;
+  unitNumber?: string;
+  unitCode?: string;
+  unitArea?: number;
+  groupId?: number;
+  email?: string;
   idNumber?: string;
   createdAt: string;
   agent?: { id: string; name: string; email: string };
@@ -20,7 +24,9 @@ const ClientsList = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', idNumber: '' });
+  const [formData, setFormData] = useState({
+    name: '', phone: '', unitNumber: '', unitCode: '', unitArea: '', groupId: 1, email: '', idNumber: ''
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -43,7 +49,7 @@ const ClientsList = () => {
   const filtered = clients.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.unitCode?.toLowerCase().includes(search.toLowerCase()) ||
       c.phone.includes(search),
   );
 
@@ -54,12 +60,16 @@ const ClientsList = () => {
     try {
       await clientsApi.create({
         name: formData.name,
-        email: formData.email,
         phone: formData.phone,
+        unitNumber: formData.unitNumber || undefined,
+        unitCode: formData.unitCode || undefined,
+        unitArea: formData.unitArea ? parseFloat(formData.unitArea) : undefined,
+        groupId: formData.groupId,
+        email: formData.email || undefined,
         idNumber: formData.idNumber || undefined,
       });
       setShowModal(false);
-      setFormData({ name: '', email: '', phone: '', idNumber: '' });
+      setFormData({ name: '', phone: '', unitNumber: '', unitCode: '', unitArea: '', groupId: 1, email: '', idNumber: '' });
       fetchClients();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create client');
@@ -87,7 +97,7 @@ const ClientsList = () => {
         <input
           type="text"
           className="input"
-          placeholder="Search clients by name, email, or phone..."
+          placeholder="Search clients by name, unit code, or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           id="client-search"
@@ -111,11 +121,13 @@ const ClientsList = () => {
           <table>
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Unit Code</th>
+                <th>Unit No.</th>
+                <th>Area (m²)</th>
                 <th>Phone</th>
-                <th>ID Number</th>
-                <th>Agent</th>
+                <th>Group</th>
                 <th>Plans</th>
                 <th>Actions</th>
               </tr>
@@ -123,16 +135,24 @@ const ClientsList = () => {
             <tbody>
               {filtered.map((client) => (
                 <tr key={client.id}>
+                  <td className="text-muted">#{client.id}</td>
                   <td className="font-medium">
                     <div className="flex items-center gap-2">
                       <div className="avatar-sm">{client.name.charAt(0)}</div>
                       {client.name}
                     </div>
                   </td>
-                  <td className="text-muted">{client.email}</td>
+                  <td className="text-muted">{client.unitCode || '—'}</td>
+                  <td className="text-muted">{client.unitNumber || '—'}</td>
+                  <td className="text-muted">{client.unitArea ? `${client.unitArea} m²` : '—'}</td>
                   <td className="text-muted">{client.phone}</td>
-                  <td className="text-muted">{client.idNumber || '—'}</td>
-                  <td className="text-muted">{client.agent?.name || '—'}</td>
+                  <td>
+                    {client.groupId ? (
+                      <span className={`badge ${client.groupId === 1 ? 'badge-primary' : 'badge-warning'}`}>
+                        Group {client.groupId}
+                      </span>
+                    ) : '—'}
+                  </td>
                   <td>
                     <span className="badge badge-info">{client.paymentPlans?.length || 0}</span>
                   </td>
@@ -167,21 +187,34 @@ const ClientsList = () => {
             <form onSubmit={handleCreate} className="modal-form">
               <div className="form-group">
                 <label className="form-label">Full Name *</label>
-                <input className="input" placeholder="John Doe" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                <input className="input" placeholder="Client Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Email *</label>
-                  <input className="input" type="email" placeholder="john@example.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+                  <label className="form-label">Phone *</label>
+                  <input className="input" placeholder="010..." value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Phone *</label>
-                  <input className="input" placeholder="+966501234567" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                  <label className="form-label">Group Classification</label>
+                  <select className="input" value={formData.groupId} onChange={(e) => setFormData({ ...formData, groupId: parseInt(e.target.value) })}>
+                    <option value={1}>Group 1 (1-39)</option>
+                    <option value={2}>Group 2 (40-70)</option>
+                  </select>
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">ID Number</label>
-                <input className="input" placeholder="National ID or Passport" value={formData.idNumber} onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })} />
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Unit Code</label>
+                  <input className="input" placeholder="e.g. A-101" value={formData.unitCode} onChange={(e) => setFormData({ ...formData, unitCode: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Unit Details / Number</label>
+                  <input className="input" placeholder="Building 79, Floor 4..." value={formData.unitNumber} onChange={(e) => setFormData({ ...formData, unitNumber: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Area (m²)</label>
+                  <input type="number" className="input" placeholder="120" value={formData.unitArea} onChange={(e) => setFormData({ ...formData, unitArea: e.target.value })} />
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
