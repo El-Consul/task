@@ -13,11 +13,27 @@ export class ClientsService {
     return client;
   }
 
-  async findAll() {
-    return this.prisma.client.findMany({
-      include: { agent: { select: { id: true, name: true, email: true } }, paymentPlans: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [total, data] = await Promise.all([
+      this.prisma.client.count(),
+      this.prisma.client.findMany({
+        include: { agent: { select: { id: true, name: true, email: true } }, paymentPlans: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {

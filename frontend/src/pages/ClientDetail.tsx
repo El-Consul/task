@@ -20,6 +20,7 @@ interface ClientDetail {
     unitPrice: number;
     deposit: number;
     remainingAmount: number;
+    assessmentAmount?: number;
     measurements?: number;
     deposit10Percent?: number;
     contractDate: string;
@@ -169,6 +170,7 @@ const ClientDetail = () => {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4 mb-4 text-sm bg-black/20 p-3 rounded-lg border border-white/5">
+                      {plan.assessmentAmount ? <div><span className="text-muted">Assessment (المقايسة):</span> {plan.assessmentAmount.toLocaleString()} EGP</div> : null}
                       {plan.measurements ? <div><span className="text-muted">Measurements:</span> {plan.measurements.toLocaleString()} EGP</div> : null}
                       {plan.deposit10Percent ? <div><span className="text-muted">10% Deposit:</span> {plan.deposit10Percent.toLocaleString()} EGP</div> : null}
                     </div>

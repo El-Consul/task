@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { ValidationPipe } from '@nestjs/common';
 import express from 'express';
 
 const server = express();
@@ -24,6 +25,7 @@ async function bootstrap() {
   if (!app) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(server));
     app.setGlobalPrefix('api');
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
   }
 }
@@ -40,6 +42,7 @@ if (process.env.NODE_ENV !== 'production') {
     const localApp = await NestFactory.create(AppModule);
     localApp.enableCors();
     localApp.setGlobalPrefix('api');
+    localApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await localApp.listen(3001);
   };
   startLocal();

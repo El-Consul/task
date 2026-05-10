@@ -27,6 +27,7 @@ const CreatePaymentPlan = () => {
   const [unitPrice, setUnitPrice] = useState<number>(2485000);
   const [deposit, setDeposit] = useState<number>(495000);
   const [contractDate, setContractDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [assessmentAmount, setAssessmentAmount] = useState<number>(0);
   const [measurements, setMeasurements] = useState<number>(40000);
   const [deposit10Percent, setDeposit10Percent] = useState<number>(248000);
 
@@ -140,6 +141,7 @@ const CreatePaymentPlan = () => {
         unitPrice,
         contractDate,
         deposit,
+        assessmentAmount,
         measurements,
         deposit10Percent,
         installments: installments.map(i => ({
@@ -192,7 +194,7 @@ const CreatePaymentPlan = () => {
               <input type="number" className="input" value={unitPrice} onChange={e => setUnitPrice(Number(e.target.value))} />
             </div>
             <div className="form-group">
-              <label className="form-label">Deposit</label>
+              <label className="form-label">Down Payment</label>
               <input type="number" className="input" value={deposit} onChange={e => setDeposit(Number(e.target.value))} />
             </div>
           </div>
@@ -208,9 +210,14 @@ const CreatePaymentPlan = () => {
               <input type="number" className="input" value={measurements} onChange={e => setMeasurements(Number(e.target.value))} />
             </div>
             <div className="form-group">
-              <label className="form-label">Maintenance (10%)</label>
-              <input type="number" className="input" value={deposit10Percent} onChange={e => setDeposit10Percent(Number(e.target.value))} />
+              <label className="form-label">Assessment Amount (المقايسة)</label>
+              <input type="number" className="input" value={assessmentAmount} onChange={e => setAssessmentAmount(Number(e.target.value))} />
             </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Maintenance (10%)</label>
+            <input type="number" className="input" value={deposit10Percent} onChange={e => setDeposit10Percent(Number(e.target.value))} />
           </div>
 
           <div className="p-3 bg-black/20 rounded-lg mt-2">

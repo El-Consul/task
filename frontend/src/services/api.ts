@@ -16,7 +16,14 @@ api.interceptors.request.use((config) => {
 
 // Redirect to login on 401 or 403 (stale token without permissions)
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // If the response is paginated { data: [...], meta: {...} }, return just the data array
+    // to maintain compatibility with existing components that expect an array.
+    if (res.data && res.data.data && res.data.meta) {
+      return { ...res, data: res.data.data };
+    }
+    return res;
+  },
   (err) => {
     const status = err.response?.status;
     if ((status === 401 || status === 403) && window.location.pathname !== '/login') {

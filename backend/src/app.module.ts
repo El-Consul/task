@@ -12,8 +12,18 @@ import { ExportsModule } from './exports/exports.module';
 import { UsersModule } from './users/users.module';
 import { AiModule } from './ai/ai.module';
 
+import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { UploadsModule } from './uploads/uploads.module';
+
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
@@ -25,6 +35,7 @@ import { AiModule } from './ai/ai.module';
     NotificationsModule,
     ExportsModule,
     AiModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

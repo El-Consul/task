@@ -7,7 +7,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       select: {
         id: true,
         email: true,
@@ -18,6 +18,7 @@ export class UsersService {
         createdAt: true,
       },
     });
+    return users.map(u => ({ ...u, permissions: JSON.parse(u.permissions || '[]') }));
   }
 
   async findOne(id: string) {
@@ -33,7 +34,7 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return { ...user, permissions: JSON.parse(user.permissions || '[]') };
   }
 
   async update(id: string, data: any) {
@@ -43,7 +44,13 @@ export class UsersService {
     } else {
       data.password = await bcrypt.hash(data.password, 10);
     }
-    return this.prisma.user.update({
+    
+    // Handle permissions if present
+    if (data.permissions) {
+      data.permissions = JSON.stringify(data.permissions);
+    }
+
+    const updated = await this.prisma.user.update({
       where: { id },
       data,
       select: {
@@ -56,6 +63,7 @@ export class UsersService {
         createdAt: true,
       },
     });
+    return { ...updated, permissions: JSON.parse(updated.permissions || '[]') };
   }
 
   async remove(id: string) {

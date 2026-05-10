@@ -8,6 +8,7 @@ interface Department {
   code: string;
   name?: string;
   price: number;
+  area?: number;
   status: string;
   createdAt: string;
 }
@@ -18,7 +19,7 @@ const DepartmentsList = () => {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ code: '', name: '', price: '' });
+  const [formData, setFormData] = useState({ code: '', name: '', price: '', area: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuth();
@@ -56,14 +57,20 @@ const DepartmentsList = () => {
     setSubmitting(true);
     setError('');
     try {
+      const data = { 
+        name: formData.name, 
+        price: parseFloat(formData.price),
+        area: formData.area ? parseFloat(formData.area) : undefined
+      };
+
       if (editId) {
-        await departmentsApi.update(editId, { name: formData.name, price: parseFloat(formData.price) });
+        await departmentsApi.update(editId, data);
       } else {
-        await departmentsApi.create({ code: formData.code, name: formData.name || undefined, price: parseFloat(formData.price) });
+        await departmentsApi.create({ ...data, code: formData.code } as any);
       }
       setShowModal(false);
       setEditId(null);
-      setFormData({ code: '', name: '', price: '' });
+      setFormData({ code: '', name: '', price: '', area: '' });
       fetchDepartments();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save department');
@@ -74,7 +81,12 @@ const DepartmentsList = () => {
 
   const openEdit = (dept: Department) => {
     setEditId(dept.id);
-    setFormData({ code: dept.code, name: dept.name || '', price: dept.price.toString() });
+    setFormData({ 
+      code: dept.code, 
+      name: dept.name || '', 
+      price: dept.price.toString(),
+      area: dept.area?.toString() || '' 
+    });
     setShowModal(true);
   };
 
@@ -93,7 +105,7 @@ const DepartmentsList = () => {
           <p className="text-muted mt-2">Manage property units and their status</p>
         </div>
         {canManage && (
-          <button className="btn btn-primary" onClick={() => { setEditId(null); setFormData({ code: '', name: '', price: '' }); setShowModal(true); }} id="add-department-btn">
+          <button className="btn btn-primary" onClick={() => { setEditId(null); setFormData({ code: '', name: '', price: '', area: '' }); setShowModal(true); }} id="add-department-btn">
             <Plus size={18} /> Add Unit
           </button>
         )}
@@ -143,7 +155,8 @@ const DepartmentsList = () => {
                 </div>
                 <span className={`badge ${getStatusBadge(dept.status)}`}>{dept.status}</span>
               </div>
-              <h3 className="font-medium mb-2">{dept.name || `Unit ${dept.code}`}</h3>
+              <h3 className="font-medium mb-1">{dept.name || `Unit ${dept.code}`}</h3>
+              {dept.area && <p className="text-sm text-muted mb-3">{dept.area} m² Area</p>}
               <p className="text-h3 text-accent-primary mb-4">${dept.price.toLocaleString()}</p>
               {canManage && (
                 <button className="btn btn-secondary w-full" onClick={() => openEdit(dept)}>
@@ -173,9 +186,15 @@ const DepartmentsList = () => {
                 <label className="form-label">Name</label>
                 <input className="input" placeholder="Luxury Apartment" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
-              <div className="form-group">
-                <label className="form-label">Price ($) *</label>
-                <input className="input" type="number" step="0.01" placeholder="150000" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} required />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Price ($) *</label>
+                  <input className="input" type="number" step="0.01" placeholder="150000" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Area (m²)</label>
+                  <input className="input" type="number" step="0.01" placeholder="120" value={formData.area} onChange={(e) => setFormData({ ...formData, area: e.target.value })} />
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

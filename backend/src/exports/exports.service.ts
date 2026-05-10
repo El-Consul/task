@@ -32,14 +32,14 @@ export class ExportsService {
 
     const records = await this.prisma.installment.findMany({
       where: filters.status ? { status: filters.status } : {},
-      include: { paymentPlan: { include: { client: true, department: true } } },
+      include: { paymentPlan: { include: { client: true } } },
       orderBy: { dueDate: 'asc' },
     });
 
     for (const r of records) {
       const row = ws.addRow({
-        client: r.paymentPlan.client.name,
-        unit: r.paymentPlan.department.code,
+        client: (r as any).paymentPlan.client.name,
+        unit: (r as any).paymentPlan.client.unitCode || '—',
         dueDate: r.dueDate.toISOString().split('T')[0],
         status: r.status,
         amount: r.amount,
@@ -58,11 +58,106 @@ export class ExportsService {
     await workbook.commit();
   }
 
-  async getAccountingSummary() {
-    const installments = await this.prisma.installment.findMany({
-      include: { paymentPlan: { include: { client: true, department: true } } },
+  async streamYearlyReport(res: Response, year: number, userId: string) {
+    await this.prisma.auditLog.create({
+      data: { userId, action: 'EXPORT', entityType: 'YearlyReport', details: JSON.stringify({ year }) },
     });
 
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res, useStyles: true });
+    const ws = workbook.addWorksheet(`Yearly Report ${year}`);
+
+    ws.columns = [
+      { header: 'Month', key: 'month', width: 15 },
+      { header: 'Expected Amount ($)', key: 'expected', width: 20 },
+      { header: 'Collected Amount ($)', key: 'collected', width: 20 },
+      { header: 'Outstanding ($)', key: 'outstanding', width: 20 },
+    ];
+
+    const installments = await this.prisma.installment.findMany({
+      where: {
+        dueDate: {
+          gte: new Date(`${year}-01-01`),
+          lte: new Date(`${year}-12-31`),
+        },
+      },
+    });
+
+    for (let month = 0; month < 12; month++) {
+      const monthInstallments = installments.filter(i => i.dueDate.getMonth() === month);
+      const expected = monthInstallments.reduce((s, i) => s + i.amount, 0);
+      const collected = monthInstallments.filter(i => i.status === 'PAID').reduce((s, i) => s + i.amount, 0);
+      const outstanding = expected - collected;
+
+      ws.addRow({
+        month: new Date(year, month).toLocaleString('default', { month: 'long' }),
+        expected,
+        collected,
+        outstanding,
+      });
+    }
+
+    await workbook.commit();
+  }
+
+  async streamClientReport(res: Response, clientId: number, userId: string) {
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId },
+      include: { paymentPlans: { include: { installments: true } } },
+    });
+
+    if (!client) throw new Error('Client not found');
+
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res, useStyles: true });
+    const ws = workbook.addWorksheet(`Client - ${client.name}`);
+
+    ws.columns = [
+      { header: 'Installment', key: 'type', width: 20 },
+      { header: 'Due Date', key: 'dueDate', width: 15 },
+      { header: 'Amount ($)', key: 'amount', width: 18 },
+      { header: 'Status', key: 'status', width: 12 },
+    ];
+
+    client.paymentPlans.forEach(plan => {
+      plan.installments.forEach(inst => {
+        ws.addRow({
+          type: inst.type,
+          dueDate: inst.dueDate.toISOString().split('T')[0],
+          amount: inst.amount,
+          status: inst.status,
+        });
+      });
+    });
+
+    await workbook.commit();
+  }
+
+  async streamUnitsReport(res: Response, userId: string) {
+    const departments = await this.prisma.department.findMany();
+
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res, useStyles: true });
+    const ws = workbook.addWorksheet('Units Status');
+
+    ws.columns = [
+      { header: 'Code', key: 'code', width: 15 },
+      { header: 'Unit Name', key: 'name', width: 25 },
+      { header: 'Price ($)', key: 'price', width: 18 },
+      { header: 'Status', key: 'status', width: 15 },
+    ];
+
+    for (const d of departments) {
+      ws.addRow({
+        code: d.code,
+        name: d.name,
+        price: d.price,
+        status: d.status,
+      });
+    }
+
+    await workbook.commit();
+  }
+
+  async getAccountingSummary() {
+    const installments = await this.prisma.installment.findMany();
     const total = installments.reduce((s, i) => s + i.amount, 0);
     const paid = installments.filter(i => i.status === 'PAID').reduce((s, i) => s + i.amount, 0);
     const overdue = installments.filter(i => i.status === 'OVERDUE').reduce((s, i) => s + i.amount, 0);

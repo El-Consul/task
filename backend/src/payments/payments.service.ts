@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PaymentsService {
@@ -39,10 +40,47 @@ export class PaymentsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.payment.findMany({
-      include: { installment: { include: { paymentPlan: { include: { client: true, department: true } } } } },
-      orderBy: { paymentDate: 'desc' },
+  async findAll(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [total, data] = await Promise.all([
+      this.prisma.payment.count(),
+      this.prisma.payment.findMany({
+        include: { installment: { include: { paymentPlan: { include: { client: true } } } } },
+        orderBy: { paymentDate: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleOverdueInstallments() {
+    const today = new Date();
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0);
+
+    const result = await this.prisma.installment.updateMany({
+      where: {
+        status: 'PENDING',
+        dueDate: {
+          lt: today,
+        },
+      },
+      data: {
+        status: 'OVERDUE',
+      },
     });
+
+    console.log(`[Cron] Marked ${result.count} installments as OVERDUE.`);
   }
 }

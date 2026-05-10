@@ -6,13 +6,14 @@ import { Plus, Eye, CreditCard, Loader2, X } from 'lucide-react';
 
 interface PaymentPlan {
   id: string;
-  totalAmount: number;
+  unitPrice: number;
+  totalAmount?: number;
   deposit: number;
-  startDate: string;
+  contractDate: string;
+  startDate?: string;
   endDate: string;
   frequency: string;
-  client: { id: string; name: string; email: string };
-  department: { id: string; code: string; name?: string; price: number };
+  client: { id: string; name: string; email: string; unitCode?: string; unitNumber?: string };
   installments: { id: string; amount: number; dueDate: string; status: string }[];
 }
 
@@ -30,7 +31,7 @@ const PaymentPlansList = () => {
 
   const [formData, setFormData] = useState({
     clientId: '', departmentId: '', totalAmount: '', deposit: '',
-    startDate: '', endDate: '', frequency: 'MONTHLY',
+    startDate: '', endDate: '', frequency: 'MONTHLY', assessmentAmount: '',
   });
 
   const fetchPlans = async () => {
@@ -72,12 +73,13 @@ const PaymentPlansList = () => {
         departmentId: formData.departmentId,
         totalAmount: parseFloat(formData.totalAmount),
         deposit: parseFloat(formData.deposit),
+        assessmentAmount: formData.assessmentAmount ? parseFloat(formData.assessmentAmount) : undefined,
         startDate: formData.startDate,
         endDate: formData.endDate,
         frequency: formData.frequency,
       });
       setShowModal(false);
-      setFormData({ clientId: '', departmentId: '', totalAmount: '', deposit: '', startDate: '', endDate: '', frequency: 'MONTHLY' });
+      setFormData({ clientId: '', departmentId: '', totalAmount: '', deposit: '', startDate: '', endDate: '', frequency: 'MONTHLY', assessmentAmount: '' });
       fetchPlans();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create plan');
@@ -111,16 +113,17 @@ const PaymentPlansList = () => {
       ) : (
         <div className="flex-col gap-4">
           {plans.map((plan) => {
-            const paidCount = plan.installments.filter((i) => i.status === 'PAID').length;
-            const overdueCount = plan.installments.filter((i) => i.status === 'OVERDUE').length;
-            const progress = plan.installments.length > 0 ? (paidCount / plan.installments.length) * 100 : 0;
-            const paidAmount = plan.installments.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.amount, 0);
+            const installments = plan.installments || [];
+            const paidCount = installments.filter((i) => i.status === 'PAID').length;
+            const overdueCount = installments.filter((i) => i.status === 'OVERDUE').length;
+            const progress = installments.length > 0 ? (paidCount / installments.length) * 100 : 0;
+            const paidAmount = installments.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.amount, 0);
 
             return (
               <div key={plan.id} className="card glass-panel plan-list-card">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-4">
-                    <div className="dept-code-badge-lg">{plan.department.code}</div>
+                    <div className="dept-code-badge-lg">{plan.client.unitCode || 'UNIT'}</div>
                     <div>
                       <h3 className="font-medium">{plan.client.name}</h3>
                       <span className="text-sm text-muted">{plan.client.email}</span>
@@ -129,7 +132,7 @@ const PaymentPlansList = () => {
                   <div className="flex items-center gap-6">
                     <div className="flex-col" style={{ textAlign: 'center' }}>
                       <span className="text-sm text-muted">Total</span>
-                      <span className="font-bold">${plan.totalAmount.toLocaleString()}</span>
+                      <span className="font-bold">${(plan.unitPrice || plan.totalAmount || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex-col" style={{ textAlign: 'center' }}>
                       <span className="text-sm text-muted">Paid</span>
@@ -151,8 +154,11 @@ const PaymentPlansList = () => {
                   <div className="progress-bar" style={{ width: `${progress}%` }} />
                 </div>
                 <div className="flex justify-between mt-2">
-                  <span className="text-sm text-muted">{plan.frequency} • {paidCount}/{plan.installments.length} paid</span>
-                  <span className="text-sm text-muted">{new Date(plan.startDate).toLocaleDateString()} → {new Date(plan.endDate).toLocaleDateString()}</span>
+                  <span className="text-sm text-muted">{plan.frequency} • {paidCount}/{installments.length} paid</span>
+                  <span className="text-sm text-muted">
+                    {new Date(plan.contractDate || plan.startDate || '').toLocaleDateString()} 
+                    {plan.endDate && ` → ${new Date(plan.endDate).toLocaleDateString()}`}
+                  </span>
                 </div>
               </div>
             );
@@ -195,6 +201,10 @@ const PaymentPlansList = () => {
                   <label className="form-label">Deposit ($) *</label>
                   <input className="input" type="number" step="0.01" placeholder="Down payment" value={formData.deposit} onChange={(e) => setFormData({ ...formData, deposit: e.target.value })} required />
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Assessment Amount (مبلغ المقايسة)</label>
+                <input className="input" type="number" step="0.01" value={formData.assessmentAmount} onChange={(e) => setFormData({ ...formData, assessmentAmount: e.target.value })} />
               </div>
               <div className="form-row">
                 <div className="form-group">
