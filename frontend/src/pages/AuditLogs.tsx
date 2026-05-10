@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Loader2, History, Search, User, Tag, Database, RotateCcw, Filter } from 'lucide-react';
+import { Loader2, History, User, Database, RotateCcw, Filter } from 'lucide-react';
 import axios from 'axios';
 
 import { translations } from '../translations';
@@ -14,7 +13,7 @@ const AuditLogs = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ userId: '', action: '', entityType: '' });
   
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const lang = localStorage.getItem('lang') || 'en';
   const t = translations[lang] || translations.en;
 

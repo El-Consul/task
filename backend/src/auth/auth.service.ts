@@ -66,7 +66,7 @@ export class AuthService {
           event: 'password_reset',
           email: email,
           token: resetToken,
-          resetUrl: `http://localhost:5173/reset-password?token=${resetToken}`
+          resetUrl: `${process.env.FRONTEND_URL || 'https://estatecloud.netlify.app'}/reset-password?token=${resetToken}`
         });
       } catch (err) {
         console.error('Failed to send webhook:', err.message);
