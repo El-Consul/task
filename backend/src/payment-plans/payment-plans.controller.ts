@@ -26,4 +26,10 @@ export class PaymentPlansController {
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
+
+  @Post(':id/installments')
+  @Permissions('PAYMENT_PLANS_MANAGE')
+  addInstallment(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+    return this.service.addInstallment(req.user.id, id, body);
+  }
 }

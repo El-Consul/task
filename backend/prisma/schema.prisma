@@ -110,6 +110,7 @@ model Payment {
   paymentDate   DateTime @default(now())
   receiptUrl    String?
   reference     String?
+  receiptNumber Int?
   createdAt     DateTime @default(now())
 
   installment   Installment @relation(fields: [installmentId], references: [id])

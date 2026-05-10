@@ -10,6 +10,9 @@ import PaymentPlansList from './pages/PaymentPlansList';
 import CreatePaymentPlan from './pages/CreatePaymentPlan';
 import PaymentsPage from './pages/PaymentsPage';
 import UsersList from './pages/UsersList';
+import AuditLogs from './pages/AuditLogs';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -57,6 +60,7 @@ function AppLayout() {
             <Route path="/payment-plans/new" element={<CreatePaymentPlan />} />
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/users" element={<UsersList />} />
+            <Route path="/audit-logs" element={<AuditLogs />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
@@ -71,6 +75,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/*"
             element={

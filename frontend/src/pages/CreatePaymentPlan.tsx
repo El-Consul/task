@@ -89,6 +89,17 @@ const CreatePaymentPlan = () => {
       }
     }
 
+    // Add Assessment if provided
+    if (assessmentAmount > 0) {
+      currentDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+      generated.push({
+        id: Math.random().toString(),
+        amount: assessmentAmount,
+        dueDate: currentDate.toISOString().split('T')[0],
+        type: 'ASSESSMENT'
+      });
+    }
+
     // Add Maintenance Deposit as an extra installment if provided
     if (deposit10Percent > 0) {
       currentDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
@@ -296,6 +307,7 @@ const CreatePaymentPlan = () => {
                           <option value="DELIVERY">Delivery</option>
                           <option value="FINAL">Final</option>
                           <option value="MAINTENANCE">Maintenance</option>
+                          <option value="ASSESSMENT">Assessment (مقايسة)</option>
                         </select>
                       </td>
                       <td>

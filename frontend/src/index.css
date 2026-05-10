@@ -396,3 +396,50 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   .form-row { grid-template-columns: 1fr; }
   .page-content { padding: 1rem; }
 }
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+}
+.segmented-control button {
+  flex: 1;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.segmented-control button.active {
+  background: var(--bg-tertiary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* File Upload Zone */
+.file-upload-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: rgba(255,255,255,0.02);
+}
+.file-upload-zone:hover {
+  border-color: var(--accent-primary);
+  background: rgba(59,130,246,0.05);
+}
+.file-upload-zone-icon {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 0.75rem;
+  color: var(--text-muted);
+}

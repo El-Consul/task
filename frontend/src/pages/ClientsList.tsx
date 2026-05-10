@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clientsApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Eye, Edit3, Users, Loader2, X } from 'lucide-react';
+import { Plus, Search, Eye, Edit3, Users, Loader2, X, DollarSign } from 'lucide-react';
 
 interface Client {
   id: number;
@@ -147,19 +147,15 @@ const ClientsList = () => {
                   <td className="text-muted">{client.unitArea ? `${client.unitArea} m²` : '—'}</td>
                   <td className="text-muted">{client.phone}</td>
                   <td>
-                    {client.groupId ? (
-                      <span className={`badge ${client.groupId === 1 ? 'badge-primary' : 'badge-warning'}`}>
-                        Group {client.groupId}
-                      </span>
-                    ) : '—'}
-                  </td>
-                  <td>
                     <span className="badge badge-info">{client.paymentPlans?.length || 0}</span>
                   </td>
                   <td>
                     <div className="flex gap-2">
                       <button className="btn-icon" onClick={() => navigate(`/clients/${client.id}`)} title="View Details">
                         <Eye size={16} />
+                      </button>
+                      <button className="btn-icon text-success" onClick={() => navigate(`/payments?search=${client.name}`)} title="Record Payment">
+                        <DollarSign size={16} />
                       </button>
                       {canManage && (
                         <button className="btn-icon" title="Edit">
@@ -193,13 +189,6 @@ const ClientsList = () => {
                 <div className="form-group">
                   <label className="form-label">Phone *</label>
                   <input className="input" placeholder="010..." value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Group Classification</label>
-                  <select className="input" value={formData.groupId} onChange={(e) => setFormData({ ...formData, groupId: parseInt(e.target.value) })}>
-                    <option value={1}>Group 1 (1-39)</option>
-                    <option value={2}>Group 2 (40-70)</option>
-                  </select>
                 </div>
               </div>
               <div className="form-row">

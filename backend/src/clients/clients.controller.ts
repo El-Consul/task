@@ -19,8 +19,8 @@ export class ClientsController {
 
   @Get()
   @Permissions('CLIENTS_VIEW')
-  findAll(@Query() query: PaginationDto) {
-    return this.service.findAll(query.page, query.limit);
+  findAll(@Query() query: any) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')

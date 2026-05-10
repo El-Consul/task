@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, TrendingUp, Building, AlertTriangle, Loader2, Download, Calendar } from 'lucide-react';
+import { Users, TrendingUp, Building, AlertTriangle, Loader2, Calendar, PieChart as PieChartIcon, FileSpreadsheet, DollarSign } from 'lucide-react';
 import { exportsApi, clientsApi, paymentsApi, notificationsApi } from '../services/api';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -20,17 +24,18 @@ const Dashboard = () => {
         exportsApi.getSummary(),
         clientsApi.getAll(),
         paymentsApi.getAll(),
-        notificationsApi.getInstallments('PENDING'),
+        notificationsApi.getInstallments(),
       ]);
 
       if (results[0].status === 'fulfilled') setSummary(results[0].value.data);
       if (results[1].status === 'fulfilled') setClientCount(results[1].value.data.length);
       if (results[2].status === 'fulfilled') setRecentPayments(results[2].value.data.slice(0, 5));
       if (results[3].status === 'fulfilled') {
-        const pending = results[3].value.data;
-        setAllPending(pending);
+        const installments = results[3].value.data;
+        setAllPending(installments);
         
-        // Sort for upcoming
+        // Sort for upcoming (only pending)
+        const pending = installments.filter((i: any) => i.status === 'PENDING');
         const sorted = [...pending].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
         setUpcomingInstallments(sorted.slice(0, 6));
       }
@@ -57,27 +62,20 @@ const Dashboard = () => {
   // Generate Yearly Data Grid
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const yearlyData = months.map((month, index) => {
-    const monthInstalls = allPending.filter(inst => {
-      const d = new Date(inst.dueDate);
-      return d.getMonth() === index && d.getFullYear() === selectedYear;
-    });
+    const total = allPending
+      .filter(inst => {
+        const d = new Date(inst.dueDate);
+        return d.getMonth() === index && d.getFullYear() === selectedYear;
+      })
+      .reduce((s, i) => s + i.amount, 0);
 
-    const group1 = monthInstalls.filter(i => i.paymentPlan.client.groupId === 1).reduce((s, i) => s + i.amount, 0);
-    const group2 = monthInstalls.filter(i => i.paymentPlan.client.groupId === 2).reduce((s, i) => s + i.amount, 0);
-    const other = monthInstalls.filter(i => !i.paymentPlan.client.groupId).reduce((s, i) => s + i.amount, 0);
-
-    return { month, group1, group2, other, total: group1 + group2 + other };
+    return { month, total };
   });
-
-  const totalG1 = yearlyData.reduce((s, d) => s + d.group1, 0);
-  const totalG2 = yearlyData.reduce((s, d) => s + d.group2, 0);
-  const totalOther = yearlyData.reduce((s, d) => s + d.other, 0);
-  const totalYear = yearlyData.reduce((s, d) => s + d.total, 0);
 
   const stats = [
     { title: 'Total Clients', value: clientCount, icon: <Users size={24} color="var(--accent-primary)" />, color: 'var(--accent-primary)' },
     { title: 'Total Collected', value: `${summary.paid.toLocaleString()} EGP`, icon: <TrendingUp size={24} color="var(--success)" />, color: 'var(--success)' },
-    { title: 'Pending Installs', value: allPending.length, icon: <Building size={24} color="var(--warning)" />, color: 'var(--warning)' },
+    { title: 'Pending Installments', value: allPending.filter(i => i.status === 'PENDING').length, icon: <Building size={24} color="var(--warning)" />, color: 'var(--warning)' },
     { title: 'Overdue Amount', value: `${summary.overdue.toLocaleString()} EGP`, icon: <AlertTriangle size={24} color="var(--danger)" />, color: 'var(--danger)' },
   ];
 
@@ -98,7 +96,7 @@ const Dashboard = () => {
           <p className="text-muted mt-2">Welcome back! Here's your property portfolio at a glance.</p>
         </div>
         <button className="btn btn-primary" onClick={handleExport} id="download-report-btn">
-          <Download size={18} /> Export Report
+          <FileSpreadsheet size={18} /> Export Full Accounting Report
         </button>
       </div>
 
@@ -116,55 +114,75 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Yearly Expected Income Heatmap/Grid */}
-      <div className="card glass-panel">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-h3 flex items-center gap-2"><Calendar size={20} /> Yearly Expected Income</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-muted text-sm">Select Year:</span>
-            <input 
-              type="number" 
-              className="input w-24" 
-              value={selectedYear} 
-              onChange={e => setSelectedYear(Number(e.target.value))} 
-            />
+      {/* Yearly Expected Income Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="card glass-panel lg:col-span-2">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-h3 flex items-center gap-2"><Calendar size={20} /> Monthly Expected Revenue</h3>
+            <div className="flex items-center gap-2">
+              <input 
+                type="number" 
+                className="input w-24" 
+                value={selectedYear} 
+                onChange={e => setSelectedYear(Number(e.target.value))} 
+              />
+            </div>
+          </div>
+          
+          <div style={{ width: '100%', height: 350 }}>
+            <ResponsiveContainer>
+              <BarChart data={yearlyData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" fontSize={12} />
+                <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1d21', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  itemStyle={{ fontSize: '12px' }}
+                />
+                <Legend iconType="circle" />
+                <Bar dataKey="total" name="Total Expected" fill="var(--accent-primary)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th className="text-right">Group 1 (EGP)</th>
-                <th className="text-right">Group 2 (EGP)</th>
-                <th className="text-right">Other (EGP)</th>
-                <th className="text-right font-bold text-accent-primary">Total Expected</th>
-              </tr>
-            </thead>
-            <tbody>
-              {yearlyData.map(data => (
-                <tr key={data.month}>
-                  <td className="font-medium">{data.month}</td>
-                  <td className="text-right">{data.group1 > 0 ? data.group1.toLocaleString() : '-'}</td>
-                  <td className="text-right">{data.group2 > 0 ? data.group2.toLocaleString() : '-'}</td>
-                  <td className="text-right">{data.other > 0 ? data.other.toLocaleString() : '-'}</td>
-                  <td className="text-right font-bold text-accent-primary">
-                    {data.total > 0 ? data.total.toLocaleString() : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <td className="font-bold">YEAR TOTAL</td>
-                <td className="text-right font-bold">{totalG1 > 0 ? totalG1.toLocaleString() : '-'}</td>
-                <td className="text-right font-bold">{totalG2 > 0 ? totalG2.toLocaleString() : '-'}</td>
-                <td className="text-right font-bold">{totalOther > 0 ? totalOther.toLocaleString() : '-'}</td>
-                <td className="text-right font-bold text-xl text-accent-primary">{totalYear.toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          </table>
+        <div className="card glass-panel">
+          <h3 className="text-h3 flex items-center gap-2 mb-6"><PieChartIcon size={20} /> Payment Status</h3>
+          <div style={{ width: '100%', height: 350 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Paid', value: summary.paid },
+                    { name: 'Overdue', value: summary.overdue },
+                    { name: 'Pending', value: summary.pending }
+                  ]}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  <Cell fill="var(--success)" />
+                  <Cell fill="var(--danger)" />
+                  <Cell fill="var(--warning)" />
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1d21', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                />
+                <Legend verticalAlign="bottom" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex-col gap-2 mt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted">Total Portfolio</span>
+              <span className="font-bold">{(summary.paid + summary.overdue + summary.pending).toLocaleString()} EGP</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted">Collection Rate</span>
+              <span className="font-bold text-success">{((summary.paid / (summary.paid + summary.overdue + summary.pending || 1)) * 100).toFixed(1)}%</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -217,16 +235,25 @@ const Dashboard = () => {
                 const daysUntil = Math.ceil((new Date(inst.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 const isOverdue = daysUntil < 0;
                 return (
-                  <div key={inst.id} className={`upcoming-item ${isOverdue ? 'border-l-4 border-danger' : ''}`} style={{ paddingLeft: '1rem' }}>
+                  <div key={inst.id} className={`upcoming-item ${isOverdue ? 'border-l-4 border-danger' : ''}`} style={{ paddingLeft: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="flex-col">
                       <span className="font-medium text-sm">{inst.paymentPlan?.client?.name}</span>
                       <span className="text-sm text-muted">{inst.paymentPlan?.client?.unitCode || '—'}</span>
                     </div>
-                    <div className="flex-col" style={{ textAlign: 'right' }}>
-                      <span className="font-bold text-sm">{inst.amount?.toLocaleString()} EGP</span>
-                      <span className={`text-sm font-medium ${isOverdue ? 'text-danger' : 'text-muted'}`}>
-                        {isOverdue ? `${Math.abs(daysUntil)}d overdue` : `In ${daysUntil}d`}
-                      </span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-col" style={{ textAlign: 'right' }}>
+                        <span className="font-bold text-sm">{inst.amount?.toLocaleString()} EGP</span>
+                        <span className={`text-sm font-medium ${isOverdue ? 'text-danger' : 'text-muted'}`}>
+                          {isOverdue ? `${Math.abs(daysUntil)}d overdue` : `In ${daysUntil}d`}
+                        </span>
+                      </div>
+                      <button 
+                        className="btn btn-primary btn-sm p-2" 
+                        onClick={() => navigate('/payments')} 
+                        title="Go to Payments"
+                      >
+                        <DollarSign size={14} />
+                      </button>
                     </div>
                   </div>
                 );

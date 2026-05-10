@@ -13,11 +13,27 @@ export class ClientsService {
     return client;
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(query: { page?: number; limit?: number; search?: string; groupId?: number }) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search } },
+        { email: { contains: query.search } },
+        { unitCode: { contains: query.search } },
+      ];
+    }
+    if (query.groupId) {
+      where.groupId = Number(query.groupId);
+    }
+
     const [total, data] = await Promise.all([
-      this.prisma.client.count(),
+      this.prisma.client.count({ where }),
       this.prisma.client.findMany({
+        where,
         include: { agent: { select: { id: true, name: true, email: true } }, paymentPlans: true },
         orderBy: { createdAt: 'desc' },
         skip,

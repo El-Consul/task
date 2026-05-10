@@ -88,6 +88,14 @@ const Login = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <div className="flex justify-end mt-1">
+              <span 
+                className="text-[11px] font-semibold text-muted hover:text-accent-primary transition-colors uppercase tracking-wider cursor-pointer" 
+                onClick={() => navigate('/forgot-password')}
+              >
+                Forgot Password?
+              </span>
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary w-full" disabled={loading} id="login-submit-btn">

@@ -16,6 +16,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { UploadsModule } from './uploads/uploads.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UploadsModule } from './uploads/uploads.module';
     ExportsModule,
     AiModule,
     UploadsModule,
+    AuditLogsModule,
   ],
 })
 export class AppModule {}

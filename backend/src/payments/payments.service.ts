@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -15,12 +15,18 @@ export class PaymentsService {
         throw new BadRequestException(`Amount must be ${installment.amount}`);
       }
 
+      const lastPayment = await tx.payment.findFirst({
+        orderBy: { receiptNumber: 'desc' },
+      });
+      const nextReceiptNumber = (lastPayment?.receiptNumber || 1000) + 1;
+
       const payment = await tx.payment.create({
         data: {
           installmentId: data.installmentId,
           amount: data.amount,
           receiptUrl: data.receiptUrl,
           reference: data.reference,
+          receiptNumber: nextReceiptNumber,
         },
       });
 
@@ -63,8 +69,11 @@ export class PaymentsService {
     };
   }
 
+  private readonly logger = new Logger(PaymentsService.name);
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleOverdueInstallments() {
+    this.logger.log('Starting Overdue Installments Check...');
     const today = new Date();
     // Set time to start of day for accurate comparison
     today.setHours(0, 0, 0, 0);

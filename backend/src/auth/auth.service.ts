@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import axios from 'axios';
 
 @Injectable()
-// Trigger IDE re-scan of Prisma types
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
@@ -58,7 +58,22 @@ export class AuthService {
       data: { resetToken, resetTokenExpiry },
     });
 
-    console.log(`[Email Service Mock] Password reset token for ${email}: ${resetToken}`);
+    // Send to Make.com Webhook if exists
+    const webhookUrl = process.env.MAKE_WEBHOOK_URL;
+    if (webhookUrl) {
+      try {
+        await axios.post(webhookUrl, {
+          event: 'password_reset',
+          email: email,
+          token: resetToken,
+          resetUrl: `http://localhost:5173/reset-password?token=${resetToken}`
+        });
+      } catch (err) {
+        console.error('Failed to send webhook:', err.message);
+      }
+    }
+
+    console.log(`[Auth] Password reset token for ${email}: ${resetToken}`);
     return { message: 'If email exists, a reset link has been sent.', mockToken: resetToken };
   }
 

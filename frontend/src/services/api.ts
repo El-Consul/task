@@ -44,6 +44,10 @@ export const authApi = {
     api.post('/auth/login', { email, password }),
   register: (data: { email: string; password: string; name: string; role: string; permissions?: string[] }) =>
     api.post('/auth/register', data),
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
 };
 
 // Clients
@@ -68,6 +72,8 @@ export const paymentPlansApi = {
   getAll: () => api.get('/payment-plans'),
   getOne: (id: string) => api.get(`/payment-plans/${id}`),
   create: (data: any) => api.post('/payment-plans', data),
+  addInstallment: (id: string, data: { amount: number; dueDate: string; type: string }) =>
+    api.post(`/payment-plans/${id}/installments`, data),
 };
 
 // Payments

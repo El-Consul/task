@@ -112,4 +112,31 @@ export class PaymentPlansService {
       include: { client: true, installments: { orderBy: { dueDate: 'asc' } } },
     });
   }
+
+  async addInstallment(userId: string, planId: string, data: { amount: number; dueDate: string; type: string }) {
+    const plan = await this.prisma.paymentPlan.findUnique({ where: { id: planId } });
+    if (!plan) throw new NotFoundException('Payment plan not found');
+
+    const installment = await (this.prisma.installment as any).create({
+      data: {
+        paymentPlanId: planId,
+        amount: data.amount,
+        dueDate: new Date(data.dueDate),
+        type: data.type,
+        status: 'PENDING',
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'UPDATE',
+        entityType: 'PaymentPlan',
+        entityId: planId,
+        details: JSON.stringify({ action: 'ADD_INSTALLMENT', amount: data.amount, type: data.type }),
+      },
+    });
+
+    return installment;
+  }
 }
