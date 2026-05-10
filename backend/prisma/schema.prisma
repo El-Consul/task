@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -114,6 +114,15 @@ model Payment {
   createdAt     DateTime @default(now())
 
   installment   Installment @relation(fields: [installmentId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  category    String   @default("GENERAL")
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model AuditLog {
