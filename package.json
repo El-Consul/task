@@ -1,0 +1,11 @@
+{
+  "name": "real-estate-system",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=frontend"
+  }
+}
