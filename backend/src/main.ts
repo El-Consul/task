@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import express from 'express';
 
 const server = express();
@@ -24,6 +25,9 @@ let app: any;
 async function bootstrap() {
   if (!app) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    app.use(helmet({
+      crossOriginResourcePolicy: false, // Required for allowing frontend to access backend resources
+    }));
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
