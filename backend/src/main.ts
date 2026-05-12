@@ -1,0 +1,53 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
+import express from 'express';
+
+const server = express();
+
+// Manual CORS Middleware to override any serverless issues
+server.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).send();
+  }
+  next();
+});
+
+let app: any;
+
+async function bootstrap() {
+  if (!app) {
+    app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    app.use(helmet({
+      crossOriginResourcePolicy: false, // Required for allowing frontend to access backend resources
+    }));
+    app.setGlobalPrefix('api');
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    await app.init();
+  }
+}
+
+// Vercel entry point
+export default async (req: any, res: any) => {
+  await bootstrap();
+  server(req, res);
+};
+
+// Local development
+if (process.env.NODE_ENV !== 'production') {
+  const startLocal = async () => {
+    const localApp = await NestFactory.create(AppModule);
+    localApp.enableCors();
+    localApp.setGlobalPrefix('api');
+    localApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    await localApp.listen(3001);
+  };
+  startLocal();
+}
