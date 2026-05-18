@@ -10,6 +10,6 @@
   },
   "scripts": {
     "build": "npm run build --workspace=frontend",
-    "vercel-build": "npm run build --workspace=backend"
+    "vercel-build": "cd backend && npx prisma generate"
   }
 }
