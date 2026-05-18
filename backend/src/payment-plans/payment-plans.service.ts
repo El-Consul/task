@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -10,16 +14,19 @@ export class PaymentPlansService {
     const unitPrice = data.unitPrice || data.totalAmount;
     const deposit = data.deposit || 0;
     const contractDate = data.contractDate || data.startDate;
-    
+
     if (!clientId) throw new BadRequestException('Client ID is required');
     if (!unitPrice) throw new BadRequestException('Unit Price is required');
-    if (!contractDate) throw new BadRequestException('Contract Date is required');
+    if (!contractDate)
+      throw new BadRequestException('Contract Date is required');
 
     if (deposit >= unitPrice) {
       throw new BadRequestException('Deposit cannot be >= unit price');
     }
 
-    const client = await this.prisma.client.findUnique({ where: { id: clientId } });
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId },
+    });
     if (!client) throw new NotFoundException('Client not found');
 
     const remainingAmount = unitPrice - deposit;
@@ -29,16 +36,19 @@ export class PaymentPlansService {
 
     // Automatic generation if no installments provided
     if (!installments || !installments.length) {
-      if (!data.endDate) throw new BadRequestException('End Date is required for auto-generation');
-      
+      if (!data.endDate)
+        throw new BadRequestException(
+          'End Date is required for auto-generation',
+        );
+
       const end = new Date(data.endDate);
       const freq = data.frequency || 'MONTHLY';
       installments = [];
 
-      let current = new Date(start);
-      // Skip the first month if it's the contract month? 
+      const current = new Date(start);
+      // Skip the first month if it's the contract month?
       // Traditional logic: first installment is 1 month after contract
-      
+
       while (current < end) {
         if (freq === 'MONTHLY') current.setMonth(current.getMonth() + 1);
         else if (freq === 'QUARTERLY') current.setMonth(current.getMonth() + 3);
@@ -53,7 +63,7 @@ export class PaymentPlansService {
 
       if (installments.length > 0) {
         const perInstallment = remainingAmount / installments.length;
-        installments.forEach((i: any) => i.amount = perInstallment);
+        installments.forEach((i: any) => (i.amount = perInstallment));
       }
     }
 
@@ -86,7 +96,10 @@ export class PaymentPlansService {
           action: 'CREATE',
           entityType: 'PaymentPlan',
           entityId: created.id,
-          details: JSON.stringify({ unitPrice: data.unitPrice, remainingAmount }),
+          details: JSON.stringify({
+            unitPrice: data.unitPrice,
+            remainingAmount,
+          }),
         },
       });
 
@@ -113,8 +126,14 @@ export class PaymentPlansService {
     });
   }
 
-  async addInstallment(userId: string, planId: string, data: { amount: number; dueDate: string; type: string }) {
-    const plan = await this.prisma.paymentPlan.findUnique({ where: { id: planId } });
+  async addInstallment(
+    userId: string,
+    planId: string,
+    data: { amount: number; dueDate: string; type: string },
+  ) {
+    const plan = await this.prisma.paymentPlan.findUnique({
+      where: { id: planId },
+    });
     if (!plan) throw new NotFoundException('Payment plan not found');
 
     const installment = await (this.prisma.installment as any).create({
@@ -133,7 +152,11 @@ export class PaymentPlansService {
         action: 'UPDATE',
         entityType: 'PaymentPlan',
         entityId: planId,
-        details: JSON.stringify({ action: 'ADD_INSTALLMENT', amount: data.amount, type: data.type }),
+        details: JSON.stringify({
+          action: 'ADD_INSTALLMENT',
+          amount: data.amount,
+          type: data.type,
+        }),
       },
     });
 

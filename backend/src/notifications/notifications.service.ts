@@ -41,7 +41,9 @@ export class NotificationsService {
     const webhookUrl = this.config.get<string>('MAKE_WEBHOOK_URL');
 
     if (!webhookUrl) {
-      this.logger.error('MAKE_WEBHOOK_URL is not defined in environment variables');
+      this.logger.error(
+        'MAKE_WEBHOOK_URL is not defined in environment variables',
+      );
       return;
     }
 
@@ -72,7 +74,6 @@ export class NotificationsService {
         });
 
         this.logger.log(`✅ Notification sent via Webhook: ${client.name}`);
-
       } catch (error: any) {
         await this.prisma.notification.create({
           data: {
@@ -84,7 +85,9 @@ export class NotificationsService {
           },
         });
 
-        this.logger.error(`❌ Failed: ${client.name} - ${error.message || 'Unknown error'}`);
+        this.logger.error(
+          `❌ Failed: ${client.name} - ${error.message || 'Unknown error'}`,
+        );
       }
     }
   }

@@ -8,8 +8,14 @@ const server = express();
 
 server.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+  res.header(
+    'Access-Control-Allow-Methods',
+    'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+  );
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, Content-Length, X-Requested-With, Accept',
+  );
   res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     return res.status(200).send();
@@ -23,7 +29,9 @@ async function bootstrap() {
   if (!app) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(server));
     app.setGlobalPrefix('api');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   }
 }
@@ -38,7 +46,9 @@ if (process.env.NODE_ENV !== 'production') {
     const localApp = await NestFactory.create(AppModule);
     localApp.enableCors();
     localApp.setGlobalPrefix('api');
-    localApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    localApp.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await localApp.listen(3001);
   };
   startLocal();

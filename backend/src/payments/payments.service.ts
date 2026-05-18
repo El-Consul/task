@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -6,11 +11,22 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  async post(userId: string, data: { installmentId: string; amount: number; receiptUrl?: string; reference?: string }) {
+  async post(
+    userId: string,
+    data: {
+      installmentId: string;
+      amount: number;
+      receiptUrl?: string;
+      reference?: string;
+    },
+  ) {
     return this.prisma.$transaction(async (tx) => {
-      const installment = await tx.installment.findUnique({ where: { id: data.installmentId } });
+      const installment = await tx.installment.findUnique({
+        where: { id: data.installmentId },
+      });
       if (!installment) throw new NotFoundException('Installment not found');
-      if (installment.status === 'PAID') throw new BadRequestException('Already paid');
+      if (installment.status === 'PAID')
+        throw new BadRequestException('Already paid');
       if (Math.abs(installment.amount - data.amount) > 0.01) {
         throw new BadRequestException(`Amount must be ${installment.amount}`);
       }
@@ -30,7 +46,10 @@ export class PaymentsService {
         },
       });
 
-      await tx.installment.update({ where: { id: data.installmentId }, data: { status: 'PAID' } });
+      await tx.installment.update({
+        where: { id: data.installmentId },
+        data: { status: 'PAID' },
+      });
 
       await tx.auditLog.create({
         data: {
@@ -51,7 +70,11 @@ export class PaymentsService {
     const [total, data] = await Promise.all([
       this.prisma.payment.count(),
       this.prisma.payment.findMany({
-        include: { installment: { include: { paymentPlan: { include: { client: true } } } } },
+        include: {
+          installment: {
+            include: { paymentPlan: { include: { client: true } } },
+          },
+        },
         orderBy: { paymentDate: 'desc' },
         skip,
         take: limit,

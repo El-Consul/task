@@ -5,7 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AuditLogsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: { userId?: string; action?: string; entityType?: string; page?: number; limit?: number }) {
+  async findAll(query: {
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;

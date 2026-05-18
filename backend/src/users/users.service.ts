@@ -18,7 +18,10 @@ export class UsersService {
         createdAt: true,
       },
     });
-    return users.map(u => ({ ...u, permissions: JSON.parse(u.permissions || '[]') }));
+    return users.map((u) => ({
+      ...u,
+      permissions: JSON.parse(u.permissions || '[]'),
+    }));
   }
 
   async findOne(id: string) {
@@ -44,7 +47,7 @@ export class UsersService {
     } else {
       data.password = await bcrypt.hash(data.password, 10);
     }
-    
+
     // Handle permissions if present
     if (data.permissions) {
       data.permissions = JSON.stringify(data.permissions);
