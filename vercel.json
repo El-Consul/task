@@ -1,3 +1,14 @@
 {
-  "outputDirectory": "frontend/dist"
+  "builds": [
+    {
+      "src": "backend/api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "backend/api/index.ts"
+    }
+  ]
 }

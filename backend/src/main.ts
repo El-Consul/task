@@ -37,11 +37,19 @@ async function bootstrap() {
 }
 
 export default async (req: any, res: any) => {
-  await bootstrap();
-  server(req, res);
+  try {
+    await bootstrap();
+    server(req, res);
+  } catch (err: any) {
+    console.error('Handler error:', err?.message, err?.stack);
+    res.status(500).json({
+      error: err?.message || String(err),
+      stack: err?.stack?.split('\n').slice(0, 5).join('\n'),
+    });
+  }
 };
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
   const startLocal = async () => {
     const localApp = await NestFactory.create(AppModule);
     localApp.enableCors();
@@ -50,6 +58,7 @@ if (process.env.NODE_ENV !== 'production') {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await localApp.listen(3001);
+    console.log('Local server running on http://localhost:3001');
   };
   startLocal();
 }
