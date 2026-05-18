@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -22,16 +20,11 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
-    // Only load ScheduleModule and ServeStaticModule in non-serverless environments
-    ...(process.env.VERCEL
-      ? []
-      : [
-          ScheduleModule.forRoot(),
-          ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'uploads'),
-            serveRoot: '/uploads',
-          }),
-        ]),
+    ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
@@ -45,16 +38,6 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     AiModule,
     UploadsModule,
     AuditLogsModule,
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
   ],
 })
 export class AppModule {}
