@@ -3,12 +3,20 @@
     {
       "src": "backend/api/index.ts",
       "use": "@vercel/node"
+    },
+    {
+      "src": "backend/api/test.ts",
+      "use": "@vercel/node"
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "backend/api/index.ts"
+    },
+    {
+      "source": "/test",
+      "destination": "backend/api/test.ts"
     }
   ]
 }
