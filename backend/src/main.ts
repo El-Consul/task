@@ -49,17 +49,3 @@ export default async (req: any, res: any) => {
     });
   }
 };
-
-if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
-  const startLocal = async () => {
-    const localApp = await NestFactory.create(AppModule);
-    localApp.enableCors();
-    localApp.setGlobalPrefix('api');
-    localApp.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    await localApp.listen(3001);
-    console.log('Local server running on http://localhost:3001');
-  };
-  startLocal();
-}
