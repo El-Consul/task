@@ -14,7 +14,6 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { CreateClientDto, UpdateClientDto } from './dto/client.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard, PermissionsGuard)

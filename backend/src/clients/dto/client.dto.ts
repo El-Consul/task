@@ -4,7 +4,6 @@ import {
   IsEmail,
   IsOptional,
   IsNumber,
-  Min,
 } from 'class-validator';
 
 export class CreateClientDto {

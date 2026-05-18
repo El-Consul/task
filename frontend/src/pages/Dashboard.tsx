@@ -232,8 +232,10 @@ const Dashboard = () => {
           ) : (
             <div className="flex-col gap-3">
               {upcomingInstallments.map((inst: any) => {
-                const daysUntil = Math.ceil((new Date(inst.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                const isOverdue = daysUntil < 0;
+                const [daysUntil, isOverdue] = (() => {
+                  const days = Math.ceil((new Date(inst.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  return [days, days < 0];
+                })();
                 return (
                   <div key={inst.id} className={`upcoming-item ${isOverdue ? 'border-l-4 border-danger' : ''}`} style={{ paddingLeft: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="flex-col">

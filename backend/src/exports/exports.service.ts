@@ -81,7 +81,7 @@ export class ExportsService {
     await workbook.commit();
   }
 
-  async streamYearlyReport(res: Response, year: number, userId: string) {
+  async streamYearlyReport(res: Response, year: number, _userId: string) {
     await this.prisma.auditLog.create({
       data: {
         userId,
@@ -136,7 +136,7 @@ export class ExportsService {
     await workbook.commit();
   }
 
-  async streamClientReport(res: Response, clientId: number, userId: string) {
+  async streamClientReport(res: Response, clientId: number, _userId: string) {
     const client = await this.prisma.client.findUnique({
       where: { id: clientId },
       include: { paymentPlans: { include: { installments: true } } },
@@ -171,7 +171,7 @@ export class ExportsService {
     await workbook.commit();
   }
 
-  async streamUnitsReport(res: Response, userId: string) {
+  async streamUnitsReport(res: Response, _userId: string) {
     const departments = await this.prisma.department.findMany();
 
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({

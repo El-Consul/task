@@ -19,7 +19,7 @@ export class AiService {
     });
   }
 
-  async getChatResponse(prompt: string, userId: string) {
+  async getChatResponse(prompt: string, _userId: string) {
     try {
       const response = await this.openai.chat.completions.create({
         model:
