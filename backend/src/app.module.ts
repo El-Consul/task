@@ -22,11 +22,16 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    // Only load ScheduleModule and ServeStaticModule in non-serverless environments
+    ...(process.env.VERCEL
+      ? []
+      : [
+          ScheduleModule.forRoot(),
+          ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'uploads'),
+            serveRoot: '/uploads',
+          }),
+        ]),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
