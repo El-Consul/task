@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
-const baseURL = isProduction 
-  ? 'https://real-estate-backend-ecru.vercel.app/api' 
-  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL,
