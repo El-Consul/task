@@ -1,3 +1,39 @@
-import handler from '../src/main';
+import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import { Module, Controller, Get } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
 
-export default handler;
+@Controller()
+class AppController {
+  @Get('*')
+  hello() {
+    return { ok: true };
+  }
+}
+
+@Module({ controllers: [AppController] })
+class AppModule {}
+
+const server = express();
+let app: any;
+
+async function bootstrap() {
+  if (!app) {
+    app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    app.setGlobalPrefix('api');
+    await app.init();
+  }
+}
+
+export default async (req: any, res: any) => {
+  try {
+    await bootstrap();
+    server(req, res);
+  } catch (err: any) {
+    res.status(500).json({
+      error: err?.message || String(err),
+      stack: err?.stack?.split('\n').slice(0, 3).join('\n'),
+    });
+  }
+};
