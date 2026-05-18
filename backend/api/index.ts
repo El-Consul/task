@@ -1,7 +1,7 @@
 const { NestFactory } = require('@nestjs/core');
 const { ExpressAdapter } = require('@nestjs/platform-express');
 const { ValidationPipe } = require('@nestjs/common');
-const { AppModule } = require('../dist/app.module');
+const { AppModule } = require('../dist/src/app.module');
 const express = require('express');
 
 const server = express();
