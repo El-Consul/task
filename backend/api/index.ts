@@ -1,43 +1,36 @@
-import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
-import express, { Request, Response, NextFunction } from 'express';
+// @ts-nocheck
+const { PrismaClient } = require('@prisma/client');
+const express = require('express');
 
-const server: express.Express = express();
+const server = express();
 
-server.use((req: Request, res: Response, next: NextFunction) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') {
-    return res.status(200).send();
-  }
-  next();
-});
+server.use(require('cors')({ origin: true, credentials: true }));
 
-let app: any;
+let handler;
 
 async function bootstrap() {
-  if (!app) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    await app.init();
-  }
+  const { AppModule } = require('../dist/src/app.module');
+  const { NestFactory } = require('@nestjs/core');
+  const { ExpressAdapter } = require('@nestjs/platform-express');
+
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+  app.setGlobalPrefix('api');
+  app.useGlobalPipes(
+    new (require('@nestjs/common').ValidationPipe)({ whitelist: true, transform: true })
+  );
+  await app.init();
+
+  handler = server;
 }
 
-export default async (req: Request, res: Response) => {
+module.exports = async (req: any, res: any) => {
   try {
-    await bootstrap();
-    server(req, res);
-  } catch (err: any) {
+    if (!handler) await bootstrap();
+    handler(req, res);
+  } catch (err) {
     console.error('Handler error:', err?.message, err?.stack);
-    res.status(500).json({
-      error: err?.message || String(err),
-      stack: err?.stack?.split('\n').slice(0, 5).join('\n'),
-    });
+    res.status(500).json({ error: err?.message || String(err), stack: err?.stack?.split('\n').slice(0, 5).join('\n') });
   }
 };
