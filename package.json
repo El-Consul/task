@@ -5,7 +5,11 @@
     "frontend",
     "backend"
   ],
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
-    "build": "npm run build --workspace=frontend"
+    "build": "npm run build --workspace=frontend",
+    "vercel-build": "npm run build --workspace=backend"
   }
 }
