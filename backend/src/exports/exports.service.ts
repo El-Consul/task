@@ -81,7 +81,7 @@ export class ExportsService {
     await workbook.commit();
   }
 
-  async streamYearlyReport(res: Response, year: number, _userId: string) {
+  async streamYearlyReport(res: Response, year: number, userId: string) {
     await this.prisma.auditLog.create({
       data: {
         userId,
