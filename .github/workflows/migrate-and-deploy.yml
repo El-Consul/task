@@ -1,0 +1,55 @@
+name: Migrate and Deploy EstateCloud
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  migrate-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Migrate Backend DB
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          npm ci
+          npx prisma migrate deploy --schema=prisma/schema.prisma
+          npx prisma generate --schema=prisma/schema.prisma
+
+      - name: Build & Deploy Backend
+        working-directory: backend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm ci
+          npm run build
+          npm install -g vercel
+          vercel --prod --token "$VERCEL_TOKEN" --confirm --yes --project real-estate-backend-api-v3
+
+      - name: Build & Deploy Frontend
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm ci
+          npm run build
+          npm install -g vercel
+          vercel --prod --token "$VERCEL_TOKEN" --confirm --yes --project task
+
+      - name: Smoke Test
+        run: |
+          echo "Frontend status: $(curl -s -o /dev/null -w '%{http_code}' https://task-teal-iota.vercel.app)"
+          echo "Backend status: $(curl -s -o /dev/null -w '%{http_code}' https://real-estate-backend-api-v3.vercel.app/api)"
