@@ -42,7 +42,7 @@ function AppLayout() {
       <Sidebar />
       <main className="main-content">
         <header className="top-nav">
-          <h2 className="text-h3">Real Estate Admin</h2>
+          <h1 className="text-h3">Real Estate Admin</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted">{user?.name || 'User'}</span>
             <div className="top-nav-avatar">
